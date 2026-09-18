@@ -122,7 +122,12 @@ export function buildDraft(
 
   const draft: ProfileDraft = {
     basics: {
-      fullName: profile.full_name || s(basics.fullName),
+      // A single-word name is usually the email prefix from sign-up; the
+      // resume's full name is better.
+      fullName:
+        profile.full_name && (/\s/.test(profile.full_name.trim()) || !s(basics.fullName))
+          ? profile.full_name
+          : s(basics.fullName) || profile.full_name || "",
       headline: profile.headline || s(basics.headline),
       bio: profile.bio || s(p?.summary),
       location: profile.location || s(basics.location),

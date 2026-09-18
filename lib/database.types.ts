@@ -156,6 +156,51 @@ export type Database = {
           },
         ]
       }
+      career_plans: {
+        Row: {
+          career_id: string
+          content: Json
+          created_at: string
+          id: string
+          model: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          career_id: string
+          content: Json
+          created_at?: string
+          id?: string
+          model?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          career_id?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          model?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "career_plans_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "careers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "career_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       career_preferences: {
         Row: {
           answers: Json

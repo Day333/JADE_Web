@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const SEEKER_NAV: NavItem[] = [
   { href: "/dashboard", label: "Home" },
-  { href: "/careers", label: "Careers", match: ["/careers", "/skill-gap", "/roadmap"] },
+  { href: "/careers", label: "Careers", match: ["/careers", "/skill-gap", "/roadmap", "/plan"] },
   { href: "/community", label: "Community", match: ["/community", "/journey"] },
   { href: "/jobs", label: "Jobs" },
   { href: "/applications", label: "Applications" },

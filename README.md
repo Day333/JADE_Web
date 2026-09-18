@@ -14,7 +14,7 @@ JADE 是面向大学生、毕业生和职业早期用户的 AI 职业成长、�
 | 新用户引导 | `/onboarding` → `resume` → `review` → `preferences` → `complete` | 选择身份、上传简历、确认解析结果、职业偏好问卷、生成 Career Profile |
 | 首页 | `/dashboard` | 职业画像摘要、当前目标与下一步、推荐岗位、社区内容 |
 | 职业档案 | `/profile`、`/settings` | 完整 Career Profile 编辑；隐私与可见性 |
-| 职业规划 | `/careers`、`/careers/[id]`、`/skill-gap`、`/roadmap` | 职业推荐、隐藏职业潜力、职业详情、技能差距、分阶段路线图、Career Readiness |
+| 职业规划 | `/careers`、`/careers/[id]`、`/skill-gap`、`/roadmap`、`/plan` | 职业推荐、隐藏职业潜力、职业详情、技能差距、分阶段路线图、Career Readiness、AI Career Plan |
 | 社区 | `/community`、`/community/c/[slug]`、`/community/post/[id]`、`/journey`、`/u/[id]` | 职业/公司/大学社区、帖子、Career Journey、公开主页、关注 |
 | 私信 | `/messages` | 用户私信与招聘者聊天（实时） |
 | 求职 | `/jobs`、`/jobs/[id]`、`/jobs/[id]/apply`、`/applications` | 个性化岗位推荐、匹配度、投递确认、申请追踪 |
@@ -23,13 +23,18 @@ JADE 是面向大学生、毕业生和职业早期用户的 AI 职业成长、�
 
 ## AI 功能与 LLM 接入
 
-需要 LLM 的功能（简历解析、职业推荐、隐藏职业潜力、技能差距、路线图、岗位匹配）目前**全部用规则算法实现**，LLM 接口先空着：
+需要 LLM 的功能都通过 `lib/ai/llm.ts` 里的 `askLLM()` 调用大模型：OpenAI 兼容接口（`openai` SDK，默认阿里云百炼 + `kimi-k3`），流式返回，`json_schema` 严格模式输出并用 zod 校验，不合格式时让模型修正一次。
 
-- `lib/ai/llm.ts`：唯一的 LLM 调用入口 `askLLM()`，目前直接返回 `null`（未接入任何模型）。
-- `lib/ai/index.ts`：各功能先调用 `askLLM()`，拿不到结果就回退到规则算法。
-- 规则算法：`resume-parser.ts`（简历解析）、`matching.ts`（职业/岗位匹配、隐藏潜力、技能差距、就绪度）、`roadmap.ts`（路线图）、`questionnaire.ts`（偏好问卷）。
+| 功能 | 调用位置 | 思考模式 | 时限 | 回退的规则算法 |
+|---|---|---|---|---|
+| 简历解析 | 上传简历后 | 关 | 100 秒 | `resume-parser.ts` |
+| 隐藏职业潜力的理由 | 职业发现、首页（按档案缓存一天） | 关 | 30 秒 | `matching.ts` |
+| Career Roadmap | 设定职业目标、重新生成路线图 | 关 | 75 秒 | `roadmap.ts` |
+| AI Career Plan（`/plan`） | 首次打开或点击 Regenerate | 关 | 240 秒 | `career-plan.ts` |
 
-以后接入模型：在 `.env` 和 Vercel 里加 `LLM_API_KEY`，在 `askLLM()` 里实现请求并返回解析好的 JSON 即可，页面代码不用改。
+实测（kimi-k3）：简历解析约 30 秒，路线图约 35 秒，生涯规划约 50 秒。开启思考模式会让时间翻倍，质量提升不明显，所以都关了；需要时在 `lib/ai/index.ts` 里把对应调用的 `effort` 改成 `"medium"` 或 `"high"`。
+
+**配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
 
 ## 技术栈
 
@@ -49,10 +54,11 @@ cp .env.example .env   # 然后填入真实值，取值位置见文件内注释
 npm run dev            # 打开 http://localhost:3000
 ```
 
-网站本身只用到两个环境变量：
+网站本身用到的环境变量：
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`（可选，配置后 AI 功能改由大模型生成，见上一节）
 
 `.env.example` 里其余的 `PG*` / `DATABASE_URL` 是给迁移工具等直连数据库用的，网站运行不需要，也不要配到 Vercel 上。
 
@@ -66,6 +72,10 @@ npm run dev            # 打开 http://localhost:3000
 | `…120100_seed_reference_data.sql` | 技能库、职业库、虚构示例公司、社区、示例岗位 |
 | `…120200_function_grants.sql` | 函数执行权限收紧 |
 | `…120300_notifications_self_insert.sql` | 允许用户给自己创建通知 |
+| `…120400_jobs_read_policy.sql` | 岗位对发布者和投递过的人始终可见 |
+| `…120500_company_communities.sql` | 新公司自动创建公司社区；点赞评论不再改动帖子更新时间 |
+| `…120600_skills_created_by_index.sql` | 性能索引 |
+| `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
 
 示例公司和岗位（`is_sample = true`）都是虚构的，没有真实招聘者，所以不能和它们聊天。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
 
@@ -73,7 +83,7 @@ npm run dev            # 打开 http://localhost:3000
 
 推送到 `main` 分支，Vercel 会自动重新部署到上面的线上地址。推送其他分支会生成一个独立的预览网址。
 
-Vercel 项目的环境变量只配了上面两个 `NEXT_PUBLIC_` 变量。
+Vercel 项目的环境变量目前只配了两个 `NEXT_PUBLIC_` 变量；要启用 LLM 需再加 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。
 
 ## Supabase 登录配置
 

@@ -5,6 +5,9 @@ import { OnboardingSteps } from "@/components/onboarding/steps";
 import { ResumeUpload } from "@/components/onboarding/resume-upload";
 import { gateStep } from "../_lib/gate";
 
+// Server actions on this page may call the LLM (see lib/ai/llm.ts).
+export const maxDuration = 120;
+
 export const metadata: Metadata = { title: "Upload your resume" };
 
 export default async function ResumeStepPage({ searchParams }: { searchParams: Promise<{ update?: string }> }) {

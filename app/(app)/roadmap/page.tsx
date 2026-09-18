@@ -15,6 +15,9 @@ import { loadCareerProfile } from "@/lib/data/profile";
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
+// Server actions on this page may call the LLM (see lib/ai/llm.ts).
+export const maxDuration = 120;
+
 export const metadata: Metadata = { title: "Your Career Roadmap" };
 
 function YouAreHere() {
@@ -152,6 +155,9 @@ export default async function RoadmapPage() {
         description={`A month-by-month plan built from your skill gap on ${formatDate(roadmap.created_at)}. Tick off tasks as you go: your skills, readiness and job matches update automatically.`}
         actions={
           <>
+            <Button asChild>
+              <Link href="/plan">AI Career Plan</Link>
+            </Button>
             <Button asChild variant="outline">
               <Link href="/skill-gap">View Skill Gap</Link>
             </Button>

@@ -256,6 +256,11 @@ export default async function DashboardPage() {
                   Continue My Roadmap <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/plan">
+                  <Sparkles className="h-4 w-4" /> View my AI Career Plan
+                </Link>
+              </Button>
             </div>
           ) : (
             <div className="space-y-3">

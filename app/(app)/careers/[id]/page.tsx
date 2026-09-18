@@ -32,6 +32,9 @@ import { JOB_TYPE_LABELS } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
+// Server actions on this page may call the LLM (see lib/ai/llm.ts).
+export const maxDuration = 120;
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const catalog = await getCatalog();

@@ -267,6 +267,9 @@ export default async function SkillGapPage() {
             <Button asChild variant="outline">
               <Link href={`/careers/${career.id}`}>About this career</Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href="/plan">AI Career Plan</Link>
+            </Button>
             <Button asChild>
               <Link href="/roadmap">
                 <MapIcon aria-hidden /> View Roadmap
