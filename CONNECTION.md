@@ -50,8 +50,14 @@ psql "$DATABASE_URL" -c "select version()"
 
 ## 当前数据库状态（2026-09-18）
 
-全新空项目：public schema 零张表，`auth.users` 零个用户。
-auth 只启用了邮箱密码登录，所有 OAuth 提供商均关闭，开放注册且要求邮箱验证。
+表结构和示例数据由 `supabase/migrations/` 下的迁移文件创建（详见 README 的"数据库"一节）。
+auth 只启用了邮箱密码登录，所有 OAuth 提供商均关闭，开放注册，**已关闭邮箱确认**。
+
+## 用 Node 连库时的坑
+
+Node 的 `--env-file` 解析 `.env` 时会把密码里的 `#`、`$` 等字符弄坏，用 `PGPASSWORD` 连接会报
+`password authentication failed`。改用 `.env` 里百分号转义过的 `DATABASE_URL`，并去掉其中的
+`sslmode` 参数后自行设置 `ssl: { rejectUnauthorized: false }`（`pg` 8.x 会把 `sslmode=require` 当成 `verify-full`）。
 
 ## 环境注意事项
 
