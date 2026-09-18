@@ -57,6 +57,20 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        float: {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(2rem, -1.5rem) scale(1.1)" },
+        },
+      },
+      animation: {
+        "gradient-x": "gradient-x 6s ease infinite",
+        float: "float 14s ease-in-out infinite",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
