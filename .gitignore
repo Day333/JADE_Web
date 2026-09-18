@@ -1,0 +1,37 @@
+# === 凭证：绝对不要提交 ===
+.env
+.env.local
+.env.*.local
+auth.json
+*.pem
+*.key
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+.next/
+out/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Next.js / Vercel
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+
+# Claude Code 本机设置
+.claude/settings.local.json
