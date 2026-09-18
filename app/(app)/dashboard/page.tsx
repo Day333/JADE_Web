@@ -81,7 +81,9 @@ async function loadFeed(userId: string, goalCareerId: string | null | undefined,
   const communityIds = [
     ...new Set([...(follows ?? []).map((f) => f.target_id), ...(goalCommunities ?? []).map((c) => c.id), ...(uniCommunities ?? []).map((c) => c.id)]),
   ];
-  const select = "id, title, type, created_at, like_count, comment_count, author:profiles(id, full_name), community:communities(name, slug)";
+  // Explicit FK hints: posts and profiles are also linked through likes, saves and comments.
+  const select =
+    "id, title, type, created_at, like_count, comment_count, author:profiles!posts_author_id_fkey(id, full_name), community:communities!posts_community_id_fkey(name, slug)";
   let posts = communityIds.length
     ? (await supabase.from("posts").select(select).in("community_id", communityIds).order("created_at", { ascending: false }).limit(5)).data ?? []
     : [];
