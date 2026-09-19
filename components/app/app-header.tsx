@@ -44,7 +44,11 @@ export async function AppHeader() {
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
         {nav.length > 0 && <MobileNav items={nav} />}
-        <Logo href={onboarded ? (profile.role === "recruiter" ? "/employer" : "/dashboard") : "/"} />
+        {/* The full name does not fit next to the icons on narrow phones. */}
+        <Logo
+          href={onboarded ? (profile.role === "recruiter" ? "/employer" : "/dashboard") : "/"}
+          wordmarkClassName="max-[480px]:hidden"
+        />
         {nav.length > 0 && <NavLinks items={nav} className="ml-4 hidden lg:flex" />}
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           {onboarded && (

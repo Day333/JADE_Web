@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import Link from "next/link";
 import { ExternalLink, FileText, FolderGit2, Globe, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,7 @@ export function AttachmentCard({
           })()
         : attachment.type === "profile"
           ? "Skills, projects & Career Journey"
-          : "Opens on JADE";
+          : `Opens on ${APP_NAME}`;
 
   const content = (
     <>

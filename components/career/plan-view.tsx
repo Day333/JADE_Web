@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarClock, CheckCircle2, CircleAlert, Compass, FileDown, Flag, Target } from "lucide-react";
@@ -48,7 +49,7 @@ function Section({ title, icon: Icon, children, className }: { title: string; ic
 /**
  * The on-page summary of the AI Career Plan. The complete version — per-phase
  * action checklists, weekly rhythm, milestones, matched opportunities,
- * alternative paths and risks — is the downloadable PDF (a JADE Pro feature).
+ * alternative paths and risks — is the downloadable PDF (a Pro feature).
  */
 export function PlanView({
   plan,
@@ -191,7 +192,7 @@ export function PlanView({
           </Link>
         </Section>
 
-        {/* The complete plan as a PDF (JADE Pro) */}
+        {/* The complete plan as a PDF (Pro) */}
         <Section
           title="The complete plan as a PDF"
           icon={FileDown}
@@ -210,7 +211,7 @@ export function PlanView({
             <DownloadPlanButton isPro={isPro} careerTitle={careerTitle} variant="default" />
           </div>
           {!isPro && (
-            <p className="mt-2 text-xs text-muted-foreground">Downloading is a JADE Pro feature — free while JADE is in beta.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Downloading is a {APP_NAME} Pro feature — free during the beta.</p>
           )}
         </Section>
       </div>

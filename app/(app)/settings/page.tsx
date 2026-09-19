@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Building2, ChevronRight, Eye, UserRound } from "lucide-react";
@@ -69,7 +70,7 @@ export default async function SettingsPage() {
         <section className="flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <h2 className="font-semibold">Sign out</h2>
-            <p className="text-sm text-muted-foreground">Sign out of JADE on this device.</p>
+            <p className="text-sm text-muted-foreground">Sign out of {APP_NAME} on this device.</p>
           </div>
           <SignOutButton />
         </section>

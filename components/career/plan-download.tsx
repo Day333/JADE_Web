@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_NAME } from "@/lib/config";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Crown, FileDown, Loader2 } from "lucide-react";
@@ -29,7 +30,7 @@ async function fetchPdf(careerTitle: string): Promise<"ok" | "pro_required" | "e
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `JADE-Career-Plan-${careerTitle.replace(/[^A-Za-z0-9]+/g, "-")}.pdf`;
+  a.download = `${APP_NAME.replace(/\s+/g, "-")}-Plan-${careerTitle.replace(/[^A-Za-z0-9]+/g, "-")}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -38,8 +39,8 @@ async function fetchPdf(careerTitle: string): Promise<"ok" | "pro_required" | "e
 }
 
 /**
- * Downloads the full plan as a PDF. For non-Pro users it opens the JADE Pro
- * dialog instead; upgrading is free while JADE is in beta, and the download
+ * Downloads the full plan as a PDF. For non-Pro users it opens the Pro
+ * dialog instead; upgrading is free during the beta, and the download
  * starts right after the upgrade.
  */
 export function DownloadPlanButton({
@@ -83,7 +84,7 @@ export function DownloadPlanButton({
         toast.error(result.error);
         return;
       }
-      toast.success("Welcome to JADE Pro!");
+      toast.success(`Welcome to ${APP_NAME} Pro!`);
       setDialogOpen(false);
       router.refresh();
       await download();
@@ -113,7 +114,7 @@ export function DownloadPlanButton({
             <div className="mx-auto mb-1 inline-flex rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 p-3 text-amber-950 shadow-lg shadow-amber-500/20">
               <Crown className="h-6 w-6" aria-hidden />
             </div>
-            <DialogTitle className="text-center">Download your plan with JADE Pro</DialogTitle>
+            <DialogTitle className="text-center">Download your plan with {APP_NAME} Pro</DialogTitle>
             <DialogDescription className="text-center">
               The web page shows your plan at a glance; the PDF is the complete version with every action, milestone and
               recommendation.
@@ -128,7 +129,7 @@ export function DownloadPlanButton({
             ))}
           </ul>
           <p className="rounded-lg bg-emerald-500/10 p-3 text-center text-sm font-medium text-emerald-700 dark:text-emerald-300">
-            JADE Pro is free while JADE is in beta.
+            {APP_NAME} Pro is free during the beta.
           </p>
           <DialogFooter className="sm:justify-center">
             <Button onClick={upgrade} disabled={upgrading} size="lg" className="w-full sm:w-auto">

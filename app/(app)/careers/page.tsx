@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Compass, Map as MapIcon, Target } from "lucide-react";
@@ -148,7 +149,7 @@ export default async function CareersPage() {
               Explore all careers
             </h2>
             <p className="text-sm text-muted-foreground">
-              Every career in JADE where your match is {MIN_SHOWN_MATCH}% or higher. Open one to see what the job involves, your strengths
+              Every career in {APP_NAME} where your match is {MIN_SHOWN_MATCH}% or higher. Open one to see what the job involves, your strengths
               and your gaps.
             </p>
           </div>

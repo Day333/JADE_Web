@@ -3,6 +3,7 @@
  * gap and the staged roadmap. The same context and output schema are used by
  * the LLM (see CAREER_PLAN_SYSTEM) and by the rule-based writer below.
  */
+import { APP_NAME } from "@/lib/config";
 import { z } from "zod";
 import { LEVEL_LABELS, type HiddenPotential, type Readiness, type SkillGap } from "@/lib/ai/matching";
 import type { PlannedStage } from "@/lib/ai/roadmap";
@@ -52,7 +53,7 @@ export const CareerPlanSchema = z.object({
 
 export type CareerPlan = z.infer<typeof CareerPlanSchema>;
 
-export const CAREER_PLAN_SYSTEM = `You are JADE's career planning coach for university students, graduates and early-career professionals.
+export const CAREER_PLAN_SYSTEM = `You are ${APP_NAME}'s career planning coach for university students, graduates and early-career professionals.
 
 You receive a JSON snapshot of one person's Career Profile, their chosen target career, their skill gap, their Career Readiness score, their month-by-month roadmap, matching job opportunities and alternative career paths. Write a personalised career plan that turns this into a clear strategy.
 

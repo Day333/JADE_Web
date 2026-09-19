@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Building2, Sparkles } from "lucide-react";
@@ -44,7 +45,7 @@ export default async function CompanyPage() {
         <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <p>
-            JADE matches candidates to your jobs using their skills, projects and experience, so you see{" "}
+            {APP_NAME} matches candidates to your jobs using their skills, projects and experience, so you see{" "}
             <span className="font-medium">why</span> each person fits, not just a PDF.
           </p>
         </div>

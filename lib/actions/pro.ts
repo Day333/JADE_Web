@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 type Result = { ok: true } | { ok: false; error: string };
 
 /**
- * Turn on JADE Pro for the signed-in user. Free while JADE is in beta —
+ * Turn on Pro for the signed-in user. Free during the beta —
  * when payments arrive, this should move behind the payment webhook.
  */
 export async function upgradeToPro(): Promise<Result> {

@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { OnboardingSteps } from "@/components/onboarding/steps";
@@ -20,7 +21,7 @@ export default async function OnboardingPage() {
       <OnboardingSteps current="role" />
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Welcome to JADE{firstName ? `, ${firstName}` : ""}
+          Welcome to {APP_NAME}{firstName ? `, ${firstName}` : ""}
         </h1>
         <p className="text-muted-foreground">
           Tell us why you&apos;re here and we&apos;ll set things up for you. It only takes a few minutes.

@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_NAME } from "@/lib/config";
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, LogOut, Radar } from "lucide-react";
@@ -47,7 +48,7 @@ const SWITCHES: { key: Exclude<PrivacyKey, "open_to_opportunities">; label: stri
 ];
 
 const DM_OPTIONS: { value: DmPolicy; label: string; description: string }[] = [
-  { value: "everyone", label: "Everyone", description: "Anyone on JADE can send you a message." },
+  { value: "everyone", label: "Everyone", description: `Anyone on ${APP_NAME} can send you a message.` },
   { value: "followers", label: "Only people I follow", description: "Only people you follow can start a conversation with you." },
   { value: "none", label: "Nobody", description: "No one can start a new conversation with you. Existing chats stay open." },
 ];

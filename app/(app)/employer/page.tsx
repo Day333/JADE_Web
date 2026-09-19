@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -212,7 +213,7 @@ export default async function EmployerDashboardPage({
                 <EmptyState
                   icon={Briefcase}
                   title="No open jobs yet"
-                  description="Publish a job and JADE will match it with candidates by skills, projects and experience."
+                  description={`Publish a job and ${APP_NAME} will match it with candidates by skills, projects and experience.`}
                   action={
                     <Button asChild>
                       <Link href="/employer/jobs/new">

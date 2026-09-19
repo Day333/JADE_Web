@@ -1,5 +1,5 @@
 -- =====================================================================
--- JADE AI Career Platform — core schema
+-- Career Lighthouse AI Career Platform — core schema
 -- Tables, row level security, helper functions and triggers.
 -- =====================================================================
 

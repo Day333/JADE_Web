@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import Link from "next/link";
 import { Compass, Map as MapIcon } from "lucide-react";
 import { EmptyState } from "@/components/app/page-parts";
@@ -75,7 +76,7 @@ export default async function PlanPage() {
         meta={
           <>
             Generated {timeAgo(latest.created_at)} ·{" "}
-            {latest.source === "ai" ? `by ${latest.model ?? "the AI model"}` : "by JADE Planner (rule-based)"} · regenerate after big
+            {latest.source === "ai" ? `by ${latest.model ?? "the AI model"}` : `by ${APP_NAME} Planner (rule-based)`} · regenerate after big
             profile changes
           </>
         }

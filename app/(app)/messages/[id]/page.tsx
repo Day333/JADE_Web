@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Briefcase, ExternalLink, UserSearch } from "lucide-react";
@@ -92,7 +93,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
               </span>
             </Link>
           ) : (
-            <span className="flex-1 text-sm text-muted-foreground">This member has left JADE.</span>
+            <span className="flex-1 text-sm text-muted-foreground">This member has left {APP_NAME}.</span>
           )}
           {other && (
             <Button variant="outline" size="sm" className="hidden shrink-0 sm:inline-flex" asChild>

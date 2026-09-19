@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/config";
 import { NextResponse } from "next/server";
 import { CareerPlanSchema } from "@/lib/ai/career-plan";
 import { computeReadiness, matchCareer, matchJob } from "@/lib/ai/matching";
@@ -10,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /plan/pdf — the signed-in user's full AI Career Plan as a PDF.
- * Downloading is a JADE Pro feature; the page offers an upgrade when this
+ * Downloading is a Pro feature; the page offers an upgrade when this
  * returns 403 with { error: "pro_required" }.
  */
 export async function GET() {
@@ -69,7 +70,7 @@ export async function GET() {
     careers,
   });
 
-  const filename = `JADE-Career-Plan-${career.title.replace(/[^A-Za-z0-9]+/g, "-")}.pdf`;
+  const filename = `${APP_NAME.replace(/\s+/g, "-")}-Plan-${career.title.replace(/[^A-Za-z0-9]+/g, "-")}.pdf`;
   return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
