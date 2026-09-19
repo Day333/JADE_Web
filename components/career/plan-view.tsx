@@ -1,7 +1,8 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarClock, CheckCircle2, Circle, CircleAlert, Compass, Flag, Repeat, ShieldAlert, Target } from "lucide-react";
-import { ForYouLabel, MatchBadge, ReadinessRing } from "@/components/app/match";
+import { ArrowRight, CalendarClock, CheckCircle2, CircleAlert, Compass, FileDown, Flag, Target } from "lucide-react";
+import { ForYouLabel, ReadinessRing } from "@/components/app/match";
+import { DownloadPlanButton } from "@/components/career/plan-download";
 import type { CareerPlan } from "@/lib/ai/career-plan";
 import type { Readiness } from "@/lib/ai/matching";
 import { cn } from "@/lib/utils";
@@ -44,37 +45,33 @@ function Section({ title, icon: Icon, children, className }: { title: string; ic
   );
 }
 
-export interface PlanJob {
-  id: string;
-  title: string;
-  company: string;
-  location: string | null;
-  match: number;
-  why: string;
-}
-
-export interface PlanCareer {
-  id: string;
-  title: string;
-  match: number;
-  why: string;
-}
-
+/**
+ * The on-page summary of the AI Career Plan. The complete version — per-phase
+ * action checklists, weekly rhythm, milestones, matched opportunities,
+ * alternative paths and risks — is the downloadable PDF (a JADE Pro feature).
+ */
 export function PlanView({
   plan,
   readiness,
   careerTitle,
-  jobs,
-  careers,
+  isPro,
   meta,
 }: {
   plan: CareerPlan;
   readiness: Readiness;
   careerTitle: string;
-  jobs: PlanJob[];
-  careers: PlanCareer[];
+  isPro: boolean;
   meta: React.ReactNode;
 }) {
+  const actionCount = plan.phases.reduce((n, p) => n + p.actions.length, 0);
+  const inPdf = [
+    `Action checklists for every phase (${actionCount} concrete actions)`,
+    `Your weekly rhythm and ${plan.milestones.length} measurable milestones`,
+    plan.targetOpportunities.length > 0 ? `${plan.targetOpportunities.length} matched job opportunities to aim for` : null,
+    plan.alternativePaths.length > 0 ? `${plan.alternativePaths.length} alternative career paths worth keeping open` : null,
+    `${plan.risks.length} risks and how to handle them`,
+  ].filter((x): x is string => x !== null);
+
   return (
     <div className="space-y-6">
       {/* Hero */}
@@ -135,7 +132,7 @@ export function PlanView({
 
       {/* Strategy */}
       <Section title="Your strategy" icon={Compass}>
-        <ol className="grid gap-4 sm:grid-cols-2">
+        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {plan.strategy.slice(0, 3).map((s, i) => (
             <li key={s.title} className="rounded-lg border bg-muted/30 p-4">
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">0{i + 1}</span>
@@ -148,10 +145,10 @@ export function PlanView({
         </ol>
       </Section>
 
-      {/* Phases */}
+      {/* Phases at a glance; the step-by-step actions live in the PDF and on the roadmap. */}
       <section>
         <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
-          <Flag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden /> The plan, phase by phase
+          <Flag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden /> The plan at a glance
         </h2>
         <ol className="grid gap-4 lg:grid-cols-3">
           {plan.phases.map((phase, i) => (
@@ -163,19 +160,9 @@ export function PlanView({
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{phase.timeframe}</span>
               </div>
               <p className="mt-3 text-lg font-semibold">{phase.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 flex-1 text-sm text-muted-foreground">
                 <Rich text={phase.goal} />
               </p>
-              <ul className="mt-4 flex-1 space-y-2">
-                {phase.actions.slice(0, 3).map((a) => (
-                  <li key={a} className="flex gap-2 text-sm">
-                    <Circle className="mt-1 h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                    <span>
-                      <Rich text={a} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
               {phase.deliverable && (
                 <p className="mt-4 rounded-lg bg-emerald-500/5 p-3 text-xs">
                   <span className="font-semibold text-emerald-700 dark:text-emerald-300">Deliverable: </span>
@@ -187,7 +174,7 @@ export function PlanView({
         </ol>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <Section title="Start this week" icon={Target}>
           <ul className="space-y-2">
             {plan.thisWeek.slice(0, 3).map((t) => (
@@ -203,99 +190,30 @@ export function PlanView({
             Track tasks on your roadmap <ArrowRight className="h-4 w-4" />
           </Link>
         </Section>
-        <Section title="Your weekly rhythm" icon={Repeat}>
-          <ul className="space-y-2">
-            {plan.weeklyRhythm.slice(0, 3).map((r) => (
-              <li key={r} className="flex gap-2 text-sm">
-                <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                <span>
-                  <Rich text={r} />
-                </span>
+
+        {/* The complete plan as a PDF (JADE Pro) */}
+        <Section
+          title="The complete plan as a PDF"
+          icon={FileDown}
+          className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.06] via-card to-card"
+        >
+          <p className="text-sm text-muted-foreground">This page is the summary. The PDF is the full written plan, ready to keep or print:</p>
+          <ul className="mt-3 space-y-2">
+            {inPdf.map((item) => (
+              <li key={item} className="flex gap-2 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                {item}
               </li>
             ))}
           </ul>
-        </Section>
-        <Section title="Milestones" icon={Flag}>
-          <ol className="relative space-y-4 border-l pl-5">
-            {plan.milestones.slice(0, 4).map((m) => (
-              <li key={`${m.when}-${m.milestone}`} className="relative">
-                <span className="absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-emerald-500 bg-background" aria-hidden />
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">{m.when}</p>
-                <p className="text-sm font-medium">
-                  <Rich text={m.milestone} />
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <Rich text={m.measure} />
-                </p>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-5">
+            <DownloadPlanButton isPro={isPro} careerTitle={careerTitle} variant="default" />
+          </div>
+          {!isPro && (
+            <p className="mt-2 text-xs text-muted-foreground">Downloading is a JADE Pro feature — free while JADE is in beta.</p>
+          )}
         </Section>
       </div>
-
-      {(jobs.length > 0 || careers.length > 0) && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {jobs.length > 0 && (
-            <Section title="Opportunities to aim for" icon={Target}>
-              <ul className="space-y-3">
-                {jobs.map((job) => (
-                  <li key={job.id}>
-                    <Link href={`/jobs/${job.id}`} className="block rounded-lg border p-3 transition-colors hover:bg-accent">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium leading-snug">{job.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {job.company}
-                            {job.location ? ` · ${job.location}` : ""}
-                          </p>
-                        </div>
-                        <MatchBadge score={job.match} />
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        <Rich text={job.why} />
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-          {careers.length > 0 && (
-            <Section title="Alternative paths worth keeping open" icon={Compass}>
-              <ul className="space-y-3">
-                {careers.map((c) => (
-                  <li key={c.id}>
-                    <Link href={`/careers/${c.id}`} className="block rounded-lg border p-3 transition-colors hover:bg-accent">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium">{c.title}</p>
-                        <MatchBadge score={c.match} />
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        <Rich text={c.why} />
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-        </div>
-      )}
-
-      <Section title="Risks and how to handle them" icon={ShieldAlert}>
-        <ul className="grid gap-4 md:grid-cols-3">
-          {plan.risks.slice(0, 3).map((r) => (
-            <li key={r.risk} className="rounded-lg border p-4">
-              <p className="text-sm font-medium">
-                <Rich text={r.risk} />
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                <Rich text={r.mitigation} />
-              </p>
-            </li>
-          ))}
-        </ul>
-      </Section>
     </div>
   );
 }

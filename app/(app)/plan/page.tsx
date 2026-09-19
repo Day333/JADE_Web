@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Compass, Map as MapIcon } from "lucide-react";
 import { EmptyState } from "@/components/app/page-parts";
 import { GeneratePlanPanel, RegeneratePlanButton } from "@/components/career/generate-plan";
-import { PlanView, type PlanCareer, type PlanJob } from "@/components/career/plan-view";
+import { DownloadPlanButton } from "@/components/career/plan-download";
+import { PlanView } from "@/components/career/plan-view";
 import { Button } from "@/components/ui/button";
 import { CareerPlanSchema } from "@/lib/ai/career-plan";
-import { computeReadiness, matchCareer, matchJob } from "@/lib/ai/matching";
+import { computeReadiness } from "@/lib/ai/matching";
 import { requireProfile } from "@/lib/auth";
 import { getCatalog } from "@/lib/data/catalog";
-import { loadOpenJobs } from "@/lib/data/jobs";
 import { loadCareerProfile } from "@/lib/data/profile";
 import { timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -55,16 +55,6 @@ export default async function PlanPage() {
 
   const plan = parsed.data;
   const readiness = computeReadiness(data, catalog, career.id);
-  const jobsById = new Map((await loadOpenJobs()).map((j) => [j.id, j]));
-  const jobs: PlanJob[] = plan.targetOpportunities.flatMap((o) => {
-    const job = jobsById.get(o.jobId);
-    if (!job) return [];
-    return [{ id: job.id, title: job.title, company: job.company?.name ?? "", location: job.location, match: matchJob(data, catalog, job).score, why: o.why }];
-  });
-  const careers: PlanCareer[] = plan.alternativePaths.flatMap((a) => {
-    const match = matchCareer(data, catalog, a.careerId);
-    return match ? [{ id: a.careerId, title: match.career.title, match: match.score, why: a.why }] : [];
-  });
 
   return (
     <div className="space-y-6">
@@ -74,14 +64,14 @@ export default async function PlanPage() {
             <MapIcon className="h-4 w-4" /> Roadmap
           </Link>
         </Button>
+        <DownloadPlanButton isPro={profile.is_pro} careerTitle={career.title} />
         <RegeneratePlanButton />
       </div>
       <PlanView
         plan={plan}
         readiness={readiness}
         careerTitle={career.title}
-        jobs={jobs}
-        careers={careers}
+        isPro={profile.is_pro}
         meta={
           <>
             Generated {timeAgo(latest.created_at)} ·{" "}

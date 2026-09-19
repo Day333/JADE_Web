@@ -1147,6 +1147,7 @@ export type Database = {
           graduation_year: number | null
           headline: string | null
           id: string
+          is_pro: boolean
           linkedin_url: string | null
           location: string | null
           major: string | null
@@ -1174,6 +1175,7 @@ export type Database = {
           graduation_year?: number | null
           headline?: string | null
           id: string
+          is_pro?: boolean
           linkedin_url?: string | null
           location?: string | null
           major?: string | null
@@ -1201,6 +1203,7 @@ export type Database = {
           graduation_year?: number | null
           headline?: string | null
           id?: string
+          is_pro?: boolean
           linkedin_url?: string | null
           location?: string | null
           major?: string | null

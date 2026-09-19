@@ -34,6 +34,8 @@ JADE 是面向大学生、毕业生和职业早期用户的 AI 职业成长、�
 
 实测（kimi-k3）：简历解析约 30 秒，路线图约 35 秒，生涯规划约 50 秒。开启思考模式会让时间翻倍，质量提升不明显，所以都关了；需要时在 `lib/ai/index.ts` 里把对应调用的 `effort` 改成 `"medium"` 或 `"high"`。
 
+**AI Career Plan 页面与 PDF**：`/plan` 页面只显示计划摘要（现状、策略、阶段概览、本周行动）；完整版（每阶段行动清单、每周节奏、里程碑、匹配岗位、备选路径、风险）由 `/plan/pdf` 生成 PDF 下载（`pdfkit`，服务端生成）。下载是 **JADE Pro** 功能（`profiles.is_pro`），测试期免费：非 Pro 用户点下载会弹出升级窗口，一键开通。生成计划时页面会显示分步进度动画。
+
 **配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
 
 ## 技术栈
@@ -76,6 +78,7 @@ npm run dev            # 打开 http://localhost:3000
 | `…120500_company_communities.sql` | 新公司自动创建公司社区；点赞评论不再改动帖子更新时间 |
 | `…120600_skills_created_by_index.sql` | 性能索引 |
 | `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
+| `20260919130000_pro_membership.sql` | JADE Pro 会员标记（`profiles.is_pro`，PDF 下载权限） |
 
 示例公司和岗位（`is_sample = true`）都是虚构的，没有真实招聘者，所以不能和它们聊天。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
 
