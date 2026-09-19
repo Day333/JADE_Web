@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import type { GrowthData } from "@/lib/data/growth";
+import type { BadgeData, GrowthData } from "@/lib/data/growth";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,6 +15,26 @@ const TIER_RING: Record<string, string> = {
 };
 
 const TIER_LABEL: Record<string, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
+
+/** Compact row of earned badges for profile pages — icon medallions with a tooltip. */
+export function BadgeStrip({ badges }: { badges: BadgeData["earned"] }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {badges.map((a) => (
+        <span
+          key={a.id}
+          title={`${a.name} (${TIER_LABEL[a.tier]}) — ${a.description}`}
+          className={cn("flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br text-xl shadow-lg", TIER_RING[a.tier])}
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-card/90" aria-hidden>
+            {a.icon}
+          </span>
+          <span className="sr-only">{a.name}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export function AchievementsWall({ achievements }: { achievements: GrowthData["achievements"] }) {
   return (

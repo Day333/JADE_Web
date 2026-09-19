@@ -5,6 +5,7 @@ import {
   Award,
   Briefcase,
   Building2,
+  CalendarDays,
   ExternalLink,
   FolderGit2,
   Github,
@@ -13,11 +14,13 @@ import {
   Linkedin,
   Lock,
   MapPin,
+  Medal,
   MessagesSquare,
   Pencil,
   Route,
   Sparkles,
   Target,
+  TrendingUp,
   UserSearch,
 } from "lucide-react";
 import { ForYouLabel, SkillChip } from "@/components/app/match";
@@ -27,10 +30,13 @@ import { UserAvatar } from "@/components/app/user-avatar";
 import { loadJourney, loadPosts, withViewerState } from "@/components/community/data";
 import { JourneyTimeline } from "@/components/community/journey-timeline";
 import { PostCard } from "@/components/community/post-card";
+import { BadgeStrip } from "@/components/growth/achievements";
+import { ActivityHeatmap } from "@/components/growth/heatmap";
 import { Button } from "@/components/ui/button";
 import { LEVEL_LABELS } from "@/lib/ai/matching";
 import { requireProfile } from "@/lib/auth";
 import { getCatalog, skillName } from "@/lib/data/catalog";
+import { type ActivityDay, loadEarnedBadges, loadPublicActivity } from "@/lib/data/growth";
 import { loadCareerProfile } from "@/lib/data/profile";
 import { JOB_TYPE_LABELS } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -90,8 +96,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const person = data.profile;
   const isSelf = viewer.id === person.id;
   const supabase = await createClient();
+  // Freshen your own badges so the public page never lags behind /progress.
+  if (isSelf) await supabase.rpc("refresh_achievements");
 
-  const [canViewRes, journey, rawPosts, followers, following, myFollow, catalog, company, companyJobs] = await Promise.all([
+  const [canViewRes, journey, rawPosts, followers, following, myFollow, catalog, company, companyJobs, badges, activityDays] = await Promise.all([
     supabase.rpc("can_view_profile", { p_user: person.id }),
     loadJourney(person.id),
     loadPosts({ authorIds: [person.id], limit: 10 }),
@@ -117,6 +125,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           .order("created_at", { ascending: false })
           .limit(5)
       : Promise.resolve({ data: [] as { id: string; title: string; location: string | null; job_type: keyof typeof JOB_TYPE_LABELS }[] }),
+    loadEarnedBadges(person.id),
+    person.role === "seeker" ? loadPublicActivity(person.id) : Promise.resolve(new Map<string, ActivityDay>()),
   ]);
   const posts = await withViewerState(viewer.id, rawPosts);
   const canView = isSelf || canViewRes.data === true;
@@ -366,6 +376,29 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             </>
           )}
 
+          {person.role === "seeker" && (isSelf || activityDays.size > 0) && (
+            <Section
+              title="Activity"
+              icon={CalendarDays}
+              action={
+                isSelf ? (
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/progress">
+                      <TrendingUp /> My progress
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+            >
+              {!isSelf && (
+                <p className="-mt-2 mb-4 text-sm text-muted-foreground">
+                  Applications, interviews and practice — consistency at a glance.
+                </p>
+              )}
+              <ActivityHeatmap days={activityDays} />
+            </Section>
+          )}
+
           <Section
             title="Career Journey"
             icon={Route}
@@ -430,6 +463,42 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         </div>
 
         <aside className="space-y-6">
+          {(badges.earned.length > 0 || (isSelf && person.role === "seeker")) && (
+            <section className="rounded-xl border bg-card p-5">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-semibold">
+                  <Medal className="h-4 w-4 text-amber-500" aria-hidden /> Badges
+                </h2>
+                {badges.earned.length > 0 && (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {badges.earned.length}/{badges.totalCount} ·{" "}
+                    <span className="text-amber-600 dark:text-amber-400">{badges.points} pts</span>
+                  </span>
+                )}
+              </div>
+              {badges.earned.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No badges yet.{" "}
+                  <Link href="/progress" className="font-medium text-emerald-700 hover:underline dark:text-emerald-400">
+                    Earn your first
+                  </Link>
+                </p>
+              ) : (
+                <>
+                  <BadgeStrip badges={badges.earned} />
+                  {isSelf && person.role === "seeker" && (
+                    <Link
+                      href="/progress"
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+                    >
+                      View all badges <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
           {canView && goalCareer && (
             <section className="rounded-xl border bg-card p-5">
               <ForYouLabel>{isSelf ? "Your career goal" : "Career goal"}</ForYouLabel>

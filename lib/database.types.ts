@@ -777,6 +777,7 @@ export type Database = {
           created_at: string
           deadline: string | null
           description: string | null
+          description_is_excerpt: boolean
           education_requirement: string | null
           experience_level: string | null
           grad_years: number[]
@@ -792,6 +793,11 @@ export type Database = {
           requirements: string[]
           responsibilities: string[]
           salary_range: string | null
+          source_board: string | null
+          source_external_id: string | null
+          source_group: string | null
+          source_posted_at: string | null
+          source_url: string | null
           status: Database["public"]["Enums"]["job_status"]
           title: string
           updated_at: string
@@ -802,6 +808,7 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           description?: string | null
+          description_is_excerpt?: boolean
           education_requirement?: string | null
           experience_level?: string | null
           grad_years?: number[]
@@ -817,6 +824,11 @@ export type Database = {
           requirements?: string[]
           responsibilities?: string[]
           salary_range?: string | null
+          source_board?: string | null
+          source_external_id?: string | null
+          source_group?: string | null
+          source_posted_at?: string | null
+          source_url?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title: string
           updated_at?: string
@@ -827,6 +839,7 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           description?: string | null
+          description_is_excerpt?: boolean
           education_requirement?: string | null
           experience_level?: string | null
           grad_years?: number[]
@@ -842,6 +855,11 @@ export type Database = {
           requirements?: string[]
           responsibilities?: string[]
           salary_range?: string | null
+          source_board?: string | null
+          source_external_id?: string | null
+          source_group?: string | null
+          source_posted_at?: string | null
+          source_url?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
           updated_at?: string
@@ -1753,6 +1771,13 @@ export type Database = {
           p_user: string
         }
         Returns: undefined
+      }
+      public_activity: {
+        Args: { p_user: string }
+        Returns: {
+          day: string
+          total: number
+        }[]
       }
       refresh_achievements: { Args: never; Returns: string[] }
       set_application_shortlisted: {

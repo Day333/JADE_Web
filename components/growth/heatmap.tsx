@@ -26,7 +26,9 @@ function label(day: ActivityDay | undefined, date: Date) {
     day.interviews > 0 && `${day.interviews} interview${day.interviews > 1 ? "s" : ""}`,
     day.questions > 0 && `${day.questions} question${day.questions > 1 ? "s" : ""}`,
   ].filter(Boolean);
-  return `${day.total} activit${day.total > 1 ? "ies" : "y"} on ${when}: ${parts.join(" · ")}`;
+  const head = `${day.total} activit${day.total > 1 ? "ies" : "y"} on ${when}`;
+  // Public-profile data only carries day totals, so there may be no breakdown.
+  return parts.length > 0 ? `${head}: ${parts.join(" · ")}` : head;
 }
 
 export function ActivityHeatmap({ days }: { days: Map<string, ActivityDay> }) {

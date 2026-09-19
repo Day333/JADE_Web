@@ -102,6 +102,45 @@ export async function loadGrowth(userId: string): Promise<GrowthData> {
   };
 }
 
+export interface BadgeData {
+  earned: (Achievement & { earnedAt: string })[];
+  points: number;
+  totalCount: number;
+}
+
+/** Earned badges for any member — badge rows are readable by every signed-in user. */
+export async function loadEarnedBadges(userId: string): Promise<BadgeData> {
+  const supabase = await createClient();
+  const [catalog, earned] = await Promise.all([
+    supabase.from("achievements").select("*").order("sort"),
+    supabase.from("user_achievements").select("achievement_id, earned_at").eq("user_id", userId),
+  ]);
+  const earnedById = new Map((earned.data ?? []).map((e) => [e.achievement_id, e.earned_at]));
+  const list = (catalog.data ?? [])
+    .filter((a) => earnedById.has(a.id))
+    .map((a) => ({ ...a, earnedAt: earnedById.get(a.id)! }));
+  return {
+    earned: list,
+    points: list.reduce((sum, a) => sum + a.points, 0),
+    totalCount: (catalog.data ?? []).length,
+  };
+}
+
+/**
+ * Per-day activity totals for a public profile. The RPC aggregates on the
+ * server and applies the same visibility rule as the career profile, so
+ * viewers only ever see day counts — never the underlying applications.
+ */
+export async function loadPublicActivity(userId: string): Promise<Map<string, ActivityDay>> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("public_activity", { p_user: userId });
+  const days = new Map<string, ActivityDay>();
+  for (const row of data ?? []) {
+    days.set(row.day, { date: row.day, applications: 0, interviews: 0, questions: 0, total: row.total });
+  }
+  return days;
+}
+
 export interface PracticeData {
   questions: PracticeQuestion[];
   doneIds: Set<string>;
