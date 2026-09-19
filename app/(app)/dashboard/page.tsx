@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, Circle, Compass, MessagesSquare, Sparkles, Target, TrendingUp } from "lucide-react";
+import { GettingStarted } from "@/components/app/getting-started";
 import { ForYouLabel, MatchBadge, MeterRow, ReadinessRing, SkillChip, type ChipStatus } from "@/components/app/match";
 import { EmptyState } from "@/components/app/page-parts";
 import { Slogan } from "@/components/app/slogan";
@@ -107,13 +108,24 @@ export default async function DashboardPage() {
   const rankedCareers = await recommendCareers(data, catalog);
   const careers = rankedCareers.filter((m) => m.score >= MIN_SHOWN_MATCH);
   const supabase = await createClient();
-  const [nextTasks, feed, hidden, applications] = await Promise.all([
+  const [nextTasks, feed, hidden, applications, plans, practised, posted, journeys] = await Promise.all([
     loadNextTasks(profile.id),
     loadFeed(profile.id, goalCareer?.id, profile.university),
     goalCareer ? Promise.resolve([]) : findHiddenPotential(data, catalog, rankedCareers),
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("user_id", profile.id).neq("status", "saved"),
+    supabase.from("career_plans").select("id", { count: "exact", head: true }).eq("user_id", profile.id),
+    supabase.from("practice_progress").select("question_id", { count: "exact", head: true }).eq("user_id", profile.id),
+    supabase.from("posts").select("id", { count: "exact", head: true }).eq("author_id", profile.id),
+    supabase.from("journey_entries").select("id", { count: "exact", head: true }).eq("user_id", profile.id),
   ]);
   const applicationCount = applications.count ?? 0;
+  const gettingStarted = [
+    { key: "goal", done: Boolean(data.goal) },
+    { key: "plan", done: (plans.count ?? 0) > 0 },
+    { key: "practice", done: (practised.count ?? 0) > 0 },
+    { key: "apply", done: applicationCount > 0 },
+    { key: "community", done: (posted.count ?? 0) > 0 || (journeys.count ?? 0) > 0 },
+  ];
   const skills = summarySkills(data, catalog);
   const firstName = profile.full_name?.split(/\s+/)[0] ?? "there";
   const education = data.educations[0];
@@ -135,6 +147,8 @@ export default async function DashboardPage() {
         </div>
         <Slogan className="shrink-0 text-sm text-muted-foreground sm:text-base" />
       </div>
+
+      <GettingStarted steps={gettingStarted} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Career Profile Summary */}
