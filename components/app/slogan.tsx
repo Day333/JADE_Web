@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { APP_SLOGAN } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
@@ -12,23 +13,26 @@ export function Slogan({ animated = false, className }: { animated?: boolean; cl
         const m = phrase.match(/^(.*\s)(\S+?)(\.?)$/);
         const [lead, word, end] = m ? [m[1], m[2], m[3]] : ["", phrase, ""];
         return (
-          <span
-            key={phrase}
-            className={cn(
-              "mr-[0.3em] inline-block last:mr-0",
-              animated &&
-                cn(
-                  "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700 motion-safe:fill-mode-both",
-                  DELAYS[i % DELAYS.length],
-                ),
-            )}
-          >
-            {lead}
-            <span className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent dark:from-emerald-400 dark:to-cyan-300">
-              {word}
+          <Fragment key={phrase}>
+            {/* A real space (not margin) so copied and read-aloud text keeps the word breaks. */}
+            {i > 0 && " "}
+            <span
+              className={cn(
+                "inline-block",
+                animated &&
+                  cn(
+                    "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700 motion-safe:fill-mode-both",
+                    DELAYS[i % DELAYS.length],
+                  ),
+              )}
+            >
+              {lead}
+              <span className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent dark:from-emerald-400 dark:to-cyan-300">
+                {word}
+              </span>
+              {end}
             </span>
-            {end}
-          </span>
+          </Fragment>
         );
       })}
     </p>
