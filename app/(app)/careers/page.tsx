@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Compass, Map as MapIcon, Target } from "lucide-react";
+import { Compass, Map as MapIcon, Target } from "lucide-react";
+import { Fold } from "@/components/app/fold";
 import { ForYouLabel } from "@/components/app/match";
 import { EmptyState, PageHeader } from "@/components/app/page-parts";
 import { CareerCard } from "@/components/career/career-card";
@@ -8,6 +9,7 @@ import { CareerExplorer, type ExplorerCareer } from "@/components/career/career-
 import { HiddenPotentialSection } from "@/components/career/hidden-potential";
 import { Button } from "@/components/ui/button";
 import { findHiddenPotential, recommendCareers } from "@/lib/ai";
+import { MIN_SHOWN_MATCH } from "@/lib/ai/matching";
 import { requireProfile } from "@/lib/auth";
 import { getCatalog } from "@/lib/data/catalog";
 import { loadCareerProfile } from "@/lib/data/profile";
@@ -43,12 +45,15 @@ export default async function CareersPage() {
 
   const ranked = await recommendCareers(data, catalog);
   const hidden = await findHiddenPotential(data, catalog, ranked);
-  const top = ranked.slice(0, 5);
   const goalId = data.goal?.career_id ?? null;
   const goalMatch = goalId ? ranked.find((m) => m.career.id === goalId) : undefined;
-  const goalInTop = goalId ? top.some((m) => m.career.id === goalId) : false;
+  const rankOf = new Map(ranked.map((m, i) => [m.career.id, i + 1]));
+  // Low matches are left out everywhere; the goal is always shown.
+  const shown = ranked.filter((m) => m.score >= MIN_SHOWN_MATCH || m.career.id === goalId);
+  // Once a goal is set, the other top candidates fold away below it.
+  const top = shown.filter((m) => m.career.id !== goalId).slice(0, goalMatch ? 4 : 5);
 
-  const explorer: ExplorerCareer[] = ranked.map((m) => ({
+  const explorer: ExplorerCareer[] = shown.map((m) => ({
     id: m.career.id,
     title: m.career.title,
     field: m.career.field,
@@ -83,48 +88,73 @@ export default async function CareersPage() {
           }
         />
 
-        {goalMatch && !goalInTop && (
-          <div className="mb-5 flex flex-col gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              <span className="font-semibold">Your current goal:</span> {goalMatch.career.title} · {goalMatch.score}% match
-            </p>
-            <Link
-              href={`/careers/${goalMatch.career.id}`}
-              className="inline-flex items-center gap-1 font-medium text-emerald-700 hover:underline dark:text-emerald-400"
-            >
-              View career <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
+        {goalMatch ? (
+          <div className="space-y-4">
+            <CareerCard match={goalMatch} catalog={catalog} rank={rankOf.get(goalMatch.career.id)} featured isGoal />
+            {top.length > 0 && (
+              <Fold
+                summary={
+                  <>
+                    <p className="font-semibold">
+                      Other recommended careers <span className="font-normal text-muted-foreground">· {top.length}</span>
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted-foreground group-open/fold:hidden">
+                      {top.map((m) => `${m.career.title} (${m.score}%)`).join(" · ")}
+                    </p>
+                  </>
+                }
+              >
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {top.map((match) => (
+                    <CareerCard key={match.career.id} match={match} catalog={catalog} rank={rankOf.get(match.career.id)} />
+                  ))}
+                </div>
+              </Fold>
+            )}
           </div>
+        ) : top.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {top.map((match, i) => (
+              <CareerCard
+                key={match.career.id}
+                match={match}
+                catalog={catalog}
+                rank={rankOf.get(match.career.id)}
+                featured={i === 0}
+                className={i === 0 ? "md:col-span-2" : undefined}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Compass}
+            title={`No career reaches a ${MIN_SHOWN_MATCH}% match yet`}
+            description="Add more skills, projects and experience to your Career Profile, or take the preference questionnaire, so we can find careers that fit you."
+            action={
+              <Button asChild>
+                <Link href="/profile">Update your Career Profile</Link>
+              </Button>
+            }
+          />
         )}
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {top.map((match, i) => (
-            <CareerCard
-              key={match.career.id}
-              match={match}
-              catalog={catalog}
-              rank={i + 1}
-              featured={i === 0}
-              isGoal={match.career.id === goalId}
-              className={i === 0 ? "md:col-span-2" : undefined}
-            />
-          ))}
-        </div>
       </div>
 
-      <HiddenPotentialSection items={hidden} />
+      <HiddenPotentialSection items={hidden} defaultOpen={!goalMatch} />
 
-      <section aria-labelledby="explore-heading" className="space-y-5">
-        <div className="space-y-1">
-          <h2 id="explore-heading" className="text-xl font-bold tracking-tight">
-            Explore all careers
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Every career in JADE with your personal match. Open one to see what the job involves, your strengths and your gaps.
-          </p>
-        </div>
-        <CareerExplorer careers={explorer} />
-      </section>
+      {explorer.length > 0 && (
+        <section aria-labelledby="explore-heading" className="space-y-5">
+          <div className="space-y-1">
+            <h2 id="explore-heading" className="text-xl font-bold tracking-tight">
+              Explore all careers
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Every career in JADE where your match is {MIN_SHOWN_MATCH}% or higher. Open one to see what the job involves, your strengths
+              and your gaps.
+            </p>
+          </div>
+          <CareerExplorer careers={explorer} minMatch={MIN_SHOWN_MATCH} />
+        </section>
+      )}
     </div>
   );
 }

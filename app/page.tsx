@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/app/logo";
 import { ForYouLabel, MatchBadge, MeterRow, ReadinessRing, SkillChip } from "@/components/app/match";
+import { Slogan } from "@/components/app/slogan";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { getMyProfile, homePathFor } from "@/lib/auth";
@@ -122,7 +123,8 @@ export default async function Landing() {
                 what job you want yet.
               </span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+            <Slogan animated className="mt-6 text-2xl sm:text-3xl" />
+            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
               Upload your resume. {APP_NAME} builds your Career Profile, shows careers that fit you, maps the skills you
               are missing, connects you with people who have been there, and matches you to real opportunities.
             </p>

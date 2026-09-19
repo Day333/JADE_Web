@@ -2,10 +2,11 @@ import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, Circle, Compass, MessagesSquare, Sparkles, Target } from "lucide-react";
 import { ForYouLabel, MatchBadge, MeterRow, ReadinessRing, SkillChip, type ChipStatus } from "@/components/app/match";
 import { EmptyState } from "@/components/app/page-parts";
+import { Slogan } from "@/components/app/slogan";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { Button } from "@/components/ui/button";
 import { findHiddenPotential, recommendCareers } from "@/lib/ai";
-import { computeReadiness, computeSkillGap } from "@/lib/ai/matching";
+import { computeReadiness, computeSkillGap, MIN_SHOWN_MATCH } from "@/lib/ai/matching";
 import { requireProfile } from "@/lib/auth";
 import { getCatalog, skillName } from "@/lib/data/catalog";
 import { loadOpenJobs, rankJobs, strongMatches } from "@/lib/data/jobs";
@@ -103,12 +104,13 @@ export default async function DashboardPage() {
   const readiness = goalCareer ? computeReadiness(data, catalog, goalCareer.id) : null;
   const ranked = rankJobs(data, catalog, jobs);
   const strong = strongMatches(ranked);
-  const careers = await recommendCareers(data, catalog);
+  const rankedCareers = await recommendCareers(data, catalog);
+  const careers = rankedCareers.filter((m) => m.score >= MIN_SHOWN_MATCH);
   const supabase = await createClient();
   const [nextTasks, feed, hidden, applications] = await Promise.all([
     loadNextTasks(profile.id),
     loadFeed(profile.id, goalCareer?.id, profile.university),
-    goalCareer ? Promise.resolve([]) : findHiddenPotential(data, catalog, careers),
+    goalCareer ? Promise.resolve([]) : findHiddenPotential(data, catalog, rankedCareers),
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("user_id", profile.id).neq("status", "saved"),
   ]);
   const applicationCount = applications.count ?? 0;
@@ -118,17 +120,20 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <p className="text-sm text-muted-foreground">Welcome back, {firstName}</p>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {goalCareer ? (
-            <>
-              You are <span className="text-emerald-600 dark:text-emerald-400">{readiness!.overall}% ready</span> for {goalCareer.title}
-            </>
-          ) : (
-            "Let's find the career that fits you"
-          )}
-        </h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-muted-foreground">Welcome back, {firstName}</p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {goalCareer ? (
+              <>
+                You are <span className="text-emerald-600 dark:text-emerald-400">{readiness!.overall}% ready</span> for {goalCareer.title}
+              </>
+            ) : (
+              "Let's find the career that fits you"
+            )}
+          </h1>
+        </div>
+        <Slogan className="shrink-0 text-sm text-muted-foreground sm:text-base" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -264,7 +269,11 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Careers that match your profile right now:</p>
+              <p className="text-sm text-muted-foreground">
+                {careers.length > 0
+                  ? "Careers that match your profile right now:"
+                  : `No career reaches a ${MIN_SHOWN_MATCH}% match yet. Add skills and projects to your profile to find careers that fit.`}
+              </p>
               <ul className="space-y-2">
                 {careers.slice(0, 3).map((m) => (
                   <li key={m.career.id}>

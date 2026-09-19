@@ -122,6 +122,9 @@ export function matchCareer(data: CareerProfileData, catalog: Catalog, careerId:
   };
 }
 
+/** Careers below this match are left out of recommendations and lists. */
+export const MIN_SHOWN_MATCH = 50;
+
 /** All careers, best match first. */
 export function rankCareers(data: CareerProfileData, catalog: Catalog): CareerMatch[] {
   return catalog.careers
@@ -234,7 +237,7 @@ export function discoverHiddenPotential(
   const topIds = new Set(ranked.slice(0, 3).map((m) => m.career.id));
 
   return ranked
-    .filter((m) => m.career.field !== field && !topIds.has(m.career.id) && m.score >= 30)
+    .filter((m) => m.career.field !== field && !topIds.has(m.career.id) && m.score >= MIN_SHOWN_MATCH)
     .map((m) => {
       const reasons = m.career.traits.filter((t) => TRAITS[t]?.test(ctx)).map((t) => TRAITS[t].label);
       return { match: m, reasons };

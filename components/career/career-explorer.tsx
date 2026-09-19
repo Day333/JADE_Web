@@ -16,8 +16,8 @@ export interface ExplorerCareer {
   isGoal: boolean;
 }
 
-/** Every career in the catalogue, grouped by field, with search and a field filter. */
-export function CareerExplorer({ careers }: { careers: ExplorerCareer[] }) {
+/** Careers from the catalogue, grouped by field, with search and a field filter. */
+export function CareerExplorer({ careers, minMatch }: { careers: ExplorerCareer[]; minMatch?: number }) {
   const [query, setQuery] = useState("");
   const [field, setField] = useState<string>("all");
   const deferredQuery = useDeferredValue(query);
@@ -84,6 +84,9 @@ export function CareerExplorer({ careers }: { careers: ExplorerCareer[] }) {
       {groups.length === 0 ? (
         <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-10 text-center">
           <p className="font-medium">No careers match your search</p>
+          {minMatch !== undefined && (
+            <p className="mt-1 text-sm text-muted-foreground">Careers under a {minMatch}% match are not shown.</p>
+          )}
           <button
             type="button"
             onClick={() => {

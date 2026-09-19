@@ -6,6 +6,7 @@ import { StarRating } from "@/components/app/page-parts";
 import { Button } from "@/components/ui/button";
 import { requireProfile } from "@/lib/auth";
 import { findHiddenPotential, recommendCareers } from "@/lib/ai/index";
+import { MIN_SHOWN_MATCH } from "@/lib/ai/matching";
 import { preferenceDisplayRows, type PreferenceScores } from "@/lib/ai/questionnaire";
 import { getCatalog, skillName } from "@/lib/data/catalog";
 import { loadCareerProfile } from "@/lib/data/profile";
@@ -19,8 +20,8 @@ export default async function OnboardingCompletePage() {
 
   const ranked = await recommendCareers(data, catalog);
   const hidden = await findHiddenPotential(data, catalog, ranked);
-  const directions = ranked.filter((m) => m.score >= 50).length;
-  const top = ranked.slice(0, 3);
+  const directions = ranked.filter((m) => m.score >= MIN_SHOWN_MATCH).length;
+  const top = ranked.filter((m) => m.score >= MIN_SHOWN_MATCH).slice(0, 3);
   const potential = hidden[0];
   const scores = (data.preferences?.scores ?? {}) as PreferenceScores;
   const hasScores = Object.keys(scores).length > 0;
@@ -95,6 +96,15 @@ export default async function OnboardingCompletePage() {
         <section className="rounded-xl border bg-card p-5 shadow-sm sm:p-6 lg:col-span-3">
           <ForYouLabel>Your top career matches</ForYouLabel>
           <h2 className="mt-1 text-lg font-semibold">Careers that fit you best right now</h2>
+          {top.length === 0 && (
+            <p className="mt-4 text-sm text-muted-foreground">
+              No career reaches a {MIN_SHOWN_MATCH}% match yet. Add more skills, projects and experience to your{" "}
+              <Link href="/profile" className="font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400">
+                Career Profile
+              </Link>{" "}
+              to find careers that fit you.
+            </p>
+          )}
           <ol className="mt-4 space-y-3">
             {top.map((m, i) => (
               <li key={m.career.id}>
