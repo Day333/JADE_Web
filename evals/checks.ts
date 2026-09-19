@@ -46,13 +46,18 @@ const check = (group: CheckResult["group"], name: string, status: CheckStatus, d
   detail,
 });
 
+/** Lowercase, hyphens as spaces, British -is- spellings as -iz- ("data-visualisation" = "data visualization"). */
+function normalize(s: string) {
+  return s.toLowerCase().replace(/-/g, " ").replace(/is(ation|ing|ed|e)\b/g, "iz$1");
+}
+
 function termRegex(term: string) {
-  const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escaped = normalize(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(^|[^a-z0-9+#])${escaped}($|[^a-z0-9+#])`, "i");
 }
 
 export function mentions(text: string, term: string) {
-  return term.trim().length > 0 && termRegex(term.trim()).test(text.toLowerCase());
+  return term.trim().length > 0 && termRegex(term.trim()).test(normalize(text));
 }
 
 // Words too generic to identify an experience or project on their own.

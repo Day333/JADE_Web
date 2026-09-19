@@ -12,7 +12,7 @@ import { join } from "node:path";
 
 import { generateCareerPlan } from "@/lib/ai";
 import { collectLLMCalls, isLLMConfigured, providerParams } from "@/lib/ai/llm";
-import { mentionsAnchor, runChecks, type CheckResult, type EvalCase, type EvalRun } from "./checks";
+import { mentions, mentionsAnchor, runChecks, type CheckResult, type EvalCase, type EvalRun } from "./checks";
 import { hallucinatedPlan as badPlan } from "./control";
 import { evaluateGate, type CaseOutcome } from "./gate";
 import { judgePlan, type JudgeResult, type JudgeScores } from "./judge";
@@ -133,6 +133,12 @@ async function main() {
     ]) {
       assert.equal(status(checks, name), "fail", name);
     }
+  });
+
+  await test("skill matching ignores hyphens and British spelling", () => {
+    assert.ok(mentions("No data-visualisation dashboard in portfolio", "Data Visualization"));
+    assert.ok(mentions("Build a C# service", "C#"));
+    assert.ok(!mentions("Visual design basics", "Data Visualization"));
   });
 
   await test("mentions_profile accepts paraphrases, not unrelated text", () => {

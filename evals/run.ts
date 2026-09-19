@@ -86,20 +86,20 @@ function printCase(r: CaseReport) {
   }
 }
 
-function markdown(reports: CaseReport[], gate: GateResult, control: JudgeResult | null) {
+function markdown(reports: CaseReport[], gate: GateResult) {
   const esc = (s: string) => s.replace(/\|/g, "\\|").replace(/\n/g, " ");
-  const { minGrounding, warnBelow, controlMaxGrounding } = config.judge;
+  const { minGrounding, warnBelow } = config.judge;
   const blocking = config.gate.blockingChecks;
   const judged = reports.find((r) => r.judge.status === "scored")?.judge;
   const generator = reports.find((r) => r.run.model)?.run.model ?? "rules only (LLM not configured)";
 
   const lines = [
-    gate.pass ? "# ✅ PASS — release allowed" : "# ❌ BLOCKED — release stopped",
+    "# LLM evaluation suites",
+    "",
+    gate.pass ? "**✅ PASS — release allowed**" : "**❌ BLOCKED — release stopped**",
     "",
     ...gate.reasons.map((r) => `- ${esc(r)}`),
     ...(gate.reasons.length ? [""] : []),
-    `${reports.length} eval cases · generator \`${generator}\` · judge \`${judged?.status === "scored" ? judged.model : "not run"}\``,
-    "",
   ];
 
   // 1. Deterministic trace checks, grouped.
@@ -113,39 +113,31 @@ function markdown(reports: CaseReport[], gate: GateResult, control: JudgeResult 
   };
   lines.push(
     "## 1. Deterministic trace checks",
-    "Rule-based, free and repeatable. Recorded from every LLM call and compared against the input the planner was given.",
+    "Rule-based, free, recorded from LLM calls and compared against the input of the test plans.",
     "",
-    "| Group | What it checks | Result |",
-    "|---|---|---|",
-    `| Invented jobs / careers (blocking) | every recommended job and career exists in the input | ${tally(all.filter((c) => blocking.includes(c.name)))} |`,
-    `| LLM call health | succeeded on the first try, ≤ ${config.latency.maxMsPerCall / 1000} s, within cost budget | ${tally(all.filter((c) => c.group === "trajectory"))} |`,
-    `| Use of the input | covers ≥ ${Math.round(config.grounding.minGapCoverage * 100)}% of skill gaps, targets the given jobs, cites own experience, follows the roadmap | ${tally(all.filter((c) => c.group === "grounding" && !blocking.includes(c.name)))} |`,
+    "| What it checks | Result |",
+    "|---|---|",
+    `| Every recommended job and career exists in the input | ${tally(all.filter((c) => blocking.includes(c.name)))} |`,
+    `| LLM call succeeded on the first try, ≤ ${config.latency.maxMsPerCall / 1000} s, within cost budget | ${tally(all.filter((c) => c.group === "trajectory"))} |`,
+    `| Covers ≥ ${Math.round(config.grounding.minGapCoverage * 100)}% of skill gaps, targets the given jobs, cites own experience, follows the roadmap | ${tally(all.filter((c) => c.group === "grounding" && !blocking.includes(c.name)))} |`,
     "",
   );
 
   // 2. LLM-as-judge.
+  const judgeModel = judged?.status === "scored" ? judged.model : null;
+  const separate = judgeModel !== null && judgeModel !== generator;
   lines.push(
     "## 2. LLM-as-judge",
-    "A judge model scores each plan from 1 to 5 on four factors:",
+    `${separate ? "A separate" : "A"} judge model${judgeModel ? ` (\`${judgeModel}\`)` : ""} scores each plan from 1 to 5 on four factors. **Threshold: score ≥ ${warnBelow}.**`,
     "",
-    "1. **Grounding** — every point traces back to the input; nothing invented",
-    "2. **Personalization** — built on this person's strengths, gaps and timing",
-    "3. **Feasibility** — realistic workload and sequencing",
+    "1. **Grounding** — traces back to the input, nothing invented",
+    "2. **Personalization** — built on this person's strengths and gaps",
+    "3. **Feasibility** — realistic workload",
     "4. **Actionability** — concrete steps and measurable milestones",
     "",
-    `**Threshold: Grounding ≥ ${minGrounding} in every case.** In the rubric, a score of 1–2 means a clear hallucination. ` +
-      "An invented employer, job or deadline would mislead a student, so it blocks the release. " +
-      `The other three factors below ${warnBelow} are warnings: they affect quality, not truthfulness.`,
+    `> **Note:** an invented employer, job or deadline would mislead a student and **will be blocked** (Grounding < ${minGrounding}).`,
     "",
   );
-  if (control) {
-    const g = control.status === "scored" ? control.scores.grounding.score : null;
-    lines.push(
-      `**Judge sanity check:** a deliberately fabricated plan must score Grounding ≤ ${controlMaxGrounding} → ` +
-        (g === null ? `${control.status}` : `got ${g} ${g <= controlMaxGrounding ? "✅" : "❌"}`),
-      "",
-    );
-  }
 
   // 3. Results, one row per case.
   const cell = (r: CaseReport, d: (typeof JUDGE_DIMENSIONS)[number]) => {
@@ -228,7 +220,7 @@ async function main(): Promise<number> {
     plan: r.run.plan,
   }));
   writeFileSync(join(outDir, "latest.json"), JSON.stringify({ createdAt: new Date().toISOString(), gate, control, cases: saved }, null, 2));
-  writeFileSync(join(outDir, "latest.md"), markdown(reports, gate, control));
+  writeFileSync(join(outDir, "latest.md"), markdown(reports, gate));
 
   console.log("");
   for (const w of gate.warnings) console.log(`⚠ ${w}`);
