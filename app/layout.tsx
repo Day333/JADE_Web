@@ -6,9 +6,14 @@ import { Toaster } from "@/components/ui/sonner";
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/lib/config";
 import "./globals.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+// The public production domain, so og:image and other absolute URLs work for
+// everyone. VERCEL_URL is the per-deployment domain, which has deployment
+// protection and is not reachable by social-media crawlers.
+const defaultUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
