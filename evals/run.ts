@@ -88,44 +88,94 @@ function printCase(r: CaseReport) {
 
 function markdown(reports: CaseReport[], gate: GateResult, control: JudgeResult | null) {
   const esc = (s: string) => s.replace(/\|/g, "\\|").replace(/\n/g, " ");
-  const lines = [`# AI Career Plan eval — ${gate.pass ? "PASS ✅" : "FAIL ❌ (release blocked)"}`, ""];
-  if (gate.reasons.length) lines.push("## Why it failed", ...gate.reasons.map((r) => `- ${r}`), "");
-  if (gate.warnings.length) lines.push("## Warnings", ...gate.warnings.map((w) => `- ${w}`), "");
+  const { minGrounding, warnBelow, controlMaxGrounding } = config.judge;
+  const blocking = config.gate.blockingChecks;
+  const judged = reports.find((r) => r.judge.status === "scored")?.judge;
+  const generator = reports.find((r) => r.run.model)?.run.model ?? "rules only (LLM not configured)";
+
+  const lines = [
+    gate.pass ? "# ✅ PASS — release allowed" : "# ❌ BLOCKED — release stopped",
+    "",
+    ...gate.reasons.map((r) => `- ${esc(r)}`),
+    ...(gate.reasons.length ? [""] : []),
+    `${reports.length} eval cases · generator \`${generator}\` · judge \`${judged?.status === "scored" ? judged.model : "not run"}\``,
+    "",
+  ];
+
+  // 1. Deterministic trace checks, grouped.
+  const all = reports.flatMap((r) => r.checks);
+  const tally = (checks: CheckResult[]) => {
+    const n = (s: CheckResult["status"]) => checks.filter((c) => c.status === s).length;
+    const ran = checks.length - n("skip");
+    if (ran === 0) return "skipped";
+    const extra = [n("warn") && `${n("warn")} warn`, n("fail") && `${n("fail")} fail`].filter(Boolean).join(" · ");
+    return `${n("fail") ? "⚠️" : "✅"} ${n("pass")}/${ran} pass${extra ? ` · ${extra}` : ""}`;
+  };
+  lines.push(
+    "## 1. Deterministic trace checks",
+    "Rule-based, free and repeatable. Recorded from every LLM call and compared against the input the planner was given.",
+    "",
+    "| Group | What it checks | Result |",
+    "|---|---|---|",
+    `| Invented jobs / careers (blocking) | every recommended job and career exists in the input | ${tally(all.filter((c) => blocking.includes(c.name)))} |`,
+    `| LLM call health | succeeded on the first try, ≤ ${config.latency.maxMsPerCall / 1000} s, within cost budget | ${tally(all.filter((c) => c.group === "trajectory"))} |`,
+    `| Use of the input | covers ≥ ${Math.round(config.grounding.minGapCoverage * 100)}% of skill gaps, targets the given jobs, cites own experience, follows the roadmap | ${tally(all.filter((c) => c.group === "grounding" && !blocking.includes(c.name)))} |`,
+    "",
+  );
+
+  // 2. LLM-as-judge.
+  lines.push(
+    "## 2. LLM-as-judge",
+    "A judge model scores each plan from 1 to 5 on four factors:",
+    "",
+    "1. **Grounding** — every point traces back to the input; nothing invented",
+    "2. **Personalization** — built on this person's strengths, gaps and timing",
+    "3. **Feasibility** — realistic workload and sequencing",
+    "4. **Actionability** — concrete steps and measurable milestones",
+    "",
+    `**Threshold: Grounding ≥ ${minGrounding} in every case.** In the rubric, a score of 1–2 means a clear hallucination. ` +
+      "An invented employer, job or deadline would mislead a student, so it blocks the release. " +
+      `The other three factors below ${warnBelow} are warnings: they affect quality, not truthfulness.`,
+    "",
+  );
   if (control) {
-    const verdict =
-      control.status === "scored"
-        ? `grounding ${control.scores.grounding.score} (must be ≤ ${config.judge.controlMaxGrounding}) — ${control.scores.grounding.score <= config.judge.controlMaxGrounding ? "judge OK" : "judge NOT trusted"}`
-        : `${control.status}: ${control.reason}`;
-    lines.push("## Hallucination control", `A plan with invented facts, judged against ${CONTROL_CASE_ID}: ${verdict}`, "");
+    const g = control.status === "scored" ? control.scores.grounding.score : null;
+    lines.push(
+      `**Judge sanity check:** a deliberately fabricated plan must score Grounding ≤ ${controlMaxGrounding} → ` +
+        (g === null ? `${control.status}` : `got ${g} ${g <= controlMaxGrounding ? "✅" : "❌"}`),
+      "",
+    );
   }
+
+  // 3. Results, one row per case.
+  const cell = (r: CaseReport, d: (typeof JUDGE_DIMENSIONS)[number]) => {
+    if (r.judge.status !== "scored") return "–";
+    const score = r.judge.scores[d].score;
+    const low = d === "grounding" ? score < minGrounding : score < warnBelow;
+    return low ? `**${score}** ${d === "grounding" ? "❌" : "⚠️"}` : String(score);
+  };
+  lines.push(
+    "## 3. Results",
+    "| Eval case | Trace checks | Grounding | Personalization | Feasibility | Actionability |",
+    "|---|---|---|---|---|---|",
+    ...reports.map((r) => `| ${r.caseId} | ${tally(r.checks)} | ${JUDGE_DIMENSIONS.map((d) => cell(r, d)).join(" | ")} |`),
+  );
   if (Object.keys(gate.judgeMeans).length) {
-    lines.push("## Judge means (1–5)", "| dimension | mean |", "|---|---|");
-    for (const [d, m] of Object.entries(gate.judgeMeans)) lines.push(`| ${d} | ${m.toFixed(2)} |`);
-    lines.push("");
+    lines.push(`| **Mean** | | ${JUDGE_DIMENSIONS.map((d) => `**${gate.judgeMeans[d]?.toFixed(1) ?? "–"}**`).join(" | ")} |`);
   }
-  for (const r of reports) {
-    lines.push(`## ${r.caseId}`, r.description ?? "", "", `Plan source: ${r.run.source}${r.run.model ? ` (${r.run.model})` : ""}`, "");
-    lines.push("| check | status | detail |", "|---|---|---|");
-    for (const c of r.checks) lines.push(`| ${c.group}/${c.name} | ${icon[c.status]} ${c.status} | ${esc(c.detail)} |`);
-    const calls = r.run.calls.filter((c) => c.fallbackReason !== "not_configured");
-    if (calls.length) {
-      lines.push("", "| LLM call | model | attempts | seconds | tokens in/out | fallback |", "|---|---|---|---|---|---|");
-      for (const c of calls) {
-        lines.push(
-          `| ${c.task} | ${c.model} | ${c.attempts.map((a) => a.outcome).join(" → ")} | ${(c.durationMs / 1000).toFixed(1)} | ${c.inputTokens}/${c.outputTokens} | ${c.fallbackReason ?? ""} |`,
-        );
-      }
-    }
-    if (r.judge.status === "scored") {
-      const j = r.judge;
-      lines.push("", `Judge: ${j.model}`, "", "| dimension | score | reason |", "|---|---|---|");
-      for (const d of JUDGE_DIMENSIONS) lines.push(`| ${d} | ${j.scores[d].score} | ${esc(j.scores[d].reason)} |`);
-      if (j.scores.hallucinations.length) lines.push("", "Possible hallucinations:", ...j.scores.hallucinations.map((h) => `- ${esc(h)}`));
-    } else {
-      lines.push("", `Judge ${r.judge.status}: ${r.judge.reason}`);
-    }
-    lines.push("");
+  lines.push("");
+
+  if (gate.warnings.length) {
+    lines.push(
+      `<details><summary>${gate.warnings.length} warning(s)</summary>`,
+      "",
+      ...gate.warnings.map((w) => `- ${esc(w)}`),
+      "",
+      "</details>",
+      "",
+    );
   }
+  lines.push("Full traces and generated plans: `eval-report` artifact (`latest.json`).");
   return lines.join("\n");
 }
 
