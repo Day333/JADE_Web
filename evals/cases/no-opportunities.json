@@ -1,0 +1,132 @@
+{
+  "id": "no-opportunities",
+  "description": "Bachelor student → Software Engineer with no matching jobs or alternatives; the plan must not invent any",
+  "context": {
+    "today": "2026-10-01",
+    "person": {
+      "name": "Lina Park (example)",
+      "headline": "Bachelor of IT student",
+      "location": "Brisbane, QLD",
+      "graduationYear": 2028,
+      "openToOpportunities": false,
+      "education": [
+        {
+          "degree": "Bachelor of Information Technology",
+          "school": "Queensland University of Technology",
+          "end": "2028-11"
+        }
+      ],
+      "experiences": [],
+      "projects": [
+        {
+          "name": "Campus events app",
+          "skills": [
+            "JavaScript",
+            "React"
+          ]
+        }
+      ]
+    },
+    "preferences": {
+      "workTypes": [
+        "internship"
+      ],
+      "locations": [
+        "Brisbane"
+      ],
+      "industries": [
+        "Technology"
+      ]
+    },
+    "goal": {
+      "careerId": "software-engineer",
+      "title": "Software Engineer",
+      "summary": "Designs, builds and maintains software products.",
+      "careerPath": [
+        "Software Engineering Intern",
+        "Graduate Software Engineer",
+        "Software Engineer",
+        "Senior Software Engineer"
+      ]
+    },
+    "readiness": {
+      "overall": 45,
+      "skills": 50,
+      "projects": 48,
+      "experience": 10,
+      "portfolio": 30
+    },
+    "skillGap": {
+      "ready": [
+        "JavaScript"
+      ],
+      "improving": [
+        {
+          "name": "React",
+          "level": "Basic",
+          "target": "Proficient"
+        }
+      ],
+      "missing": [
+        {
+          "name": "Data Structures and Algorithms",
+          "importance": "core",
+          "why": "Technical interviews test them directly.",
+          "nextStep": "Solve two problems a week."
+        },
+        {
+          "name": "Git",
+          "importance": "core",
+          "why": "Every team uses version control.",
+          "nextStep": "Put your project on GitHub with clear commits."
+        },
+        {
+          "name": "Testing",
+          "importance": "important",
+          "why": "Teams expect code with tests.",
+          "nextStep": "Add unit tests to your app."
+        }
+      ]
+    },
+    "roadmap": [
+      {
+        "period": "October 2026",
+        "title": "Learn Git",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "November 2026",
+        "title": "Data Structures and Algorithms",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "December 2026",
+        "title": "Strengthen React",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "January 2027",
+        "title": "Add tests and ship your app",
+        "kind": "project",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "February 2027",
+        "title": "Apply for internships",
+        "kind": "apply",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      }
+    ],
+    "opportunities": [],
+    "alternatives": [],
+    "community": null
+  }
+}

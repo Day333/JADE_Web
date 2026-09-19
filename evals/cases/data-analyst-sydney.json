@@ -1,0 +1,188 @@
+{
+  "id": "data-analyst-sydney",
+  "description": "International master's student → Data Analyst in Sydney; two matching jobs",
+  "context": {
+    "today": "2026-10-01",
+    "person": {
+      "name": "Mei Chen (example)",
+      "headline": "Master of Data Science student",
+      "location": "Sydney, NSW",
+      "graduationYear": 2027,
+      "openToOpportunities": true,
+      "education": [
+        {
+          "degree": "Master of Data Science",
+          "school": "University of Sydney",
+          "end": "2027-06"
+        }
+      ],
+      "experiences": [
+        {
+          "title": "Maths Tutor",
+          "organization": "Bright Minds Tutoring",
+          "kind": "work",
+          "start": "2024-02",
+          "end": "2025-12"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Sydney bus delay analysis",
+          "skills": [
+            "Python",
+            "Pandas"
+          ]
+        }
+      ]
+    },
+    "preferences": {
+      "workTypes": [
+        "internship",
+        "graduate"
+      ],
+      "locations": [
+        "Sydney"
+      ],
+      "industries": [
+        "Finance",
+        "Retail"
+      ]
+    },
+    "goal": {
+      "careerId": "data-analyst",
+      "title": "Data Analyst",
+      "summary": "Turns raw data into dashboards, reports and recommendations that help teams make better day-to-day decisions.",
+      "careerPath": [
+        "Data Analyst Intern",
+        "Junior Data Analyst",
+        "Data Analyst",
+        "Senior Data Analyst",
+        "Analytics Manager"
+      ]
+    },
+    "readiness": {
+      "overall": 58,
+      "skills": 62,
+      "projects": 55,
+      "experience": 35,
+      "portfolio": 50
+    },
+    "skillGap": {
+      "ready": [
+        "Python",
+        "Excel"
+      ],
+      "improving": [
+        {
+          "name": "SQL",
+          "level": "Basic",
+          "target": "Proficient"
+        }
+      ],
+      "missing": [
+        {
+          "name": "Data Visualization",
+          "importance": "core",
+          "why": "Dashboards are how analysts share results.",
+          "nextStep": "Build one dashboard in Tableau or Power BI."
+        },
+        {
+          "name": "Statistics",
+          "importance": "important",
+          "why": "Needed to tell real changes from noise.",
+          "nextStep": "Revise hypothesis testing and apply it to a dataset."
+        },
+        {
+          "name": "Communication",
+          "importance": "useful",
+          "why": "Findings must be explained to non-technical teams.",
+          "nextStep": "Present one analysis in five minutes."
+        }
+      ]
+    },
+    "roadmap": [
+      {
+        "period": "October 2026",
+        "title": "Strengthen SQL",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "November 2026",
+        "title": "Learn Data Visualization",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "December 2026",
+        "title": "Learn Statistics",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "January 2027",
+        "title": "Build an analytics project",
+        "kind": "project",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "February 2027",
+        "title": "Polish your portfolio",
+        "kind": "portfolio",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "March 2027",
+        "title": "Apply for Data Analyst roles",
+        "kind": "apply",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      }
+    ],
+    "opportunities": [
+      {
+        "jobId": "job-northwind-da-intern",
+        "title": "Data Analyst Intern",
+        "company": "Northwind Analytics",
+        "location": "Sydney, NSW",
+        "match": 74,
+        "verdict": "Good match: close the Data Visualization gap to stand out.",
+        "gaps": [
+          "Data Visualization"
+        ]
+      },
+      {
+        "jobId": "job-harbourview-grad-ds",
+        "title": "Graduate Data Scientist",
+        "company": "Harbourview Bank",
+        "location": "Sydney, NSW",
+        "match": 61,
+        "verdict": "Stretch role: needs Statistics and Machine Learning.",
+        "gaps": [
+          "Statistics",
+          "Machine Learning"
+        ]
+      }
+    ],
+    "alternatives": [
+      {
+        "careerId": "business-analyst",
+        "title": "Business Analyst",
+        "match": 66,
+        "reasons": [
+          "Confident with Excel",
+          "Tutoring shows you can explain ideas clearly"
+        ]
+      }
+    ],
+    "community": {
+      "name": "Data Analysts",
+      "slug": "data-analysts"
+    }
+  }
+}
