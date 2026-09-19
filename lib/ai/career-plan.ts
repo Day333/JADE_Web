@@ -15,27 +15,28 @@ import type { CareerProfileData, Catalog } from "@/lib/types";
 
 export const CareerPlanSchema = z.object({
   headline: z.string().describe("One line, e.g. 'Your 6-month plan to become a Machine Learning Engineer'"),
-  summary: z.string().describe("2-3 sentences: where the person is today and the overall strategy"),
+  summary: z.string().describe("2 short sentences: where the person is today and the overall strategy"),
   horizon: z.string().describe("Time frame of the plan, e.g. '6 months · Sep 2026 – Feb 2027'"),
   whereYouAre: z.object({
-    strengths: z.array(z.string()).describe("3-5 concrete strengths grounded in the profile"),
-    gaps: z.array(z.string()).describe("3-5 most important gaps for the goal"),
+    // .catch(): the model intermittently omits these; accept the plan and let sanitizePlan backfill.
+    strengths: z.array(z.string()).describe("the 3 strengths that matter most for the goal, grounded in the profile").catch([]),
+    gaps: z.array(z.string()).describe("the 3 most important gaps for the goal").catch([]),
   }),
   strategy: z
     .array(z.object({ title: z.string(), detail: z.string() }))
-    .describe("3-4 key strategic moves, most important first"),
+    .describe("2-3 key strategic moves, most important first"),
   phases: z
     .array(
       z.object({
         name: z.string(),
         timeframe: z.string().describe("Months covered, matching the roadmap period labels"),
         goal: z.string(),
-        actions: z.array(z.string()).describe("3-5 concrete actions"),
-        deliverable: z.string().describe("What exists at the end of the phase"),
+        actions: z.array(z.string()).describe("2-3 concrete actions"),
+        deliverable: z.string().describe("What exists at the end of the phase").catch(""),
       }),
     )
     .describe("3 phases that together cover the roadmap"),
-  weeklyRhythm: z.array(z.string()).describe("3-4 habits for a typical week"),
+  weeklyRhythm: z.array(z.string()).describe("3 habits for a typical week"),
   milestones: z
     .array(z.object({ when: z.string(), milestone: z.string(), measure: z.string() }))
     .describe("3-4 checkpoints with a measurable signal"),
@@ -46,7 +47,7 @@ export const CareerPlanSchema = z.object({
     .array(z.object({ careerId: z.string(), why: z.string() }))
     .describe("Up to 2 careers from the provided alternatives list, by careerId"),
   risks: z.array(z.object({ risk: z.string(), mitigation: z.string() })).describe("2-3 realistic risks"),
-  thisWeek: z.array(z.string()).describe("3-5 small actions the person can start this week"),
+  thisWeek: z.array(z.string()).describe("3 small actions the person can start this week"),
 });
 
 export type CareerPlan = z.infer<typeof CareerPlanSchema>;
@@ -60,7 +61,8 @@ Guidelines:
 - Ground every point in the data: name their actual experiences, projects, strengths and gaps. Do not invent facts, employers, courses or credentials that are not in the input.
 - Follow the roadmap's order and period labels for the phases so the plan and the roadmap agree.
 - targetOpportunities may only use jobId values from input.opportunities; alternativePaths may only use careerId values from input.alternatives. Leave them empty if nothing fits.
-- Keep every string short enough to scan: one or two sentences at most.
+- Keep it scannable. List items are one short sentence or fragment (aim for under 15 words); detail, why, measure and mitigation are one sentence. Never use two items where one will do, repeat a point another section already makes, or explain the obvious.
+- Highlight only what matters most: wrap a short phrase (2-4 words) in **double asterisks** — the one skill to start with, the key deliverable, a number that counts. At most one per item and 6-8 in the whole plan, never zero and never a whole sentence: they are the few things the reader should remember.
 - Be realistic about timing, workload and competition for entry-level roles.`;
 
 // ---------------------------------------------------------------------------
@@ -170,21 +172,32 @@ export function roadmapRowsFromPlan(stages: PlannedStage[]) {
   return stages.map((s) => ({ period: s.periodLabel, title: s.title, kind: s.kind, tasksDone: 0, tasksTotal: s.tasks.length }));
 }
 
-/** Drop references the model may have invented and cap list lengths. */
+/** Drop references the model may have invented, and cap list lengths. */
 export function sanitizePlan(plan: CareerPlan, ctx: PlanContext): CareerPlan {
   const jobIds = new Set(ctx.opportunities.map((o) => o.jobId));
   const careerIds = new Set(ctx.alternatives.map((a) => a.careerId));
+  // The model occasionally omits these lists (they are .catch(...) in the schema): rebuild them from the skill gap.
+  const strengths = plan.whereYouAre.strengths.length
+    ? plan.whereYouAre.strengths
+    : ctx.skillGap.ready.map((n) => `${n} already meets the level ${ctx.goal.title}s need`);
+  const gaps = plan.whereYouAre.gaps.length
+    ? plan.whereYouAre.gaps
+    : [
+        ...ctx.skillGap.missing.map((m) => `${m.name} (${m.importance} skill, not shown yet)`),
+        ...ctx.skillGap.improving.map((i) => `${i.name}: ${i.level} today, ${i.target} needed`),
+      ];
+  // Sub-lists are capped at 3 items so the plan stays scannable.
   return {
     ...plan,
-    whereYouAre: { strengths: plan.whereYouAre.strengths.slice(0, 6), gaps: plan.whereYouAre.gaps.slice(0, 6) },
-    strategy: plan.strategy.slice(0, 5),
-    phases: plan.phases.slice(0, 5),
-    weeklyRhythm: plan.weeklyRhythm.slice(0, 5),
-    milestones: plan.milestones.slice(0, 5),
+    whereYouAre: { strengths: strengths.slice(0, 3), gaps: gaps.slice(0, 3) },
+    strategy: plan.strategy.slice(0, 3),
+    phases: plan.phases.slice(0, 4).map((p) => ({ ...p, actions: p.actions.slice(0, 3) })),
+    weeklyRhythm: plan.weeklyRhythm.slice(0, 3),
+    milestones: plan.milestones.slice(0, 4),
     targetOpportunities: plan.targetOpportunities.filter((o) => jobIds.has(o.jobId)).slice(0, 3),
     alternativePaths: plan.alternativePaths.filter((a) => careerIds.has(a.careerId)).slice(0, 2),
-    risks: plan.risks.slice(0, 4),
-    thisWeek: plan.thisWeek.slice(0, 5),
+    risks: plan.risks.slice(0, 3),
+    thisWeek: plan.thisWeek.slice(0, 3),
   };
 }
 
@@ -229,17 +242,19 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
       ? [`Hands-on experience as ${latestExperience.title}${latestExperience.organization ? ` at ${latestExperience.organization}` : ""}`]
       : []),
     ...(person.projects.length > 0 ? [`${person.projects.length} project${person.projects.length > 1 ? "s" : ""} you can build on`] : []),
-  ].slice(0, 5);
+  ].slice(0, 3);
   const gapLines = [
     ...coreMissing.map((m) => `${m.name} (core skill, not shown yet)`),
     ...skillGap.improving.map((i) => `${i.name}: ${i.level} today, ${i.target} needed`),
     ...skillGap.missing.filter((m) => m.importance !== "core").map((m) => `${m.name}`),
-  ].slice(0, 5);
+  ].slice(0, 3);
 
+  // Wrapping a phrase in ** marks it as a highlight (see the plan schema/prompt).
+  const bold = (text: string) => (text ? `**${text}**` : text);
   const summary =
     readiness.overall >= 80
-      ? `You are ${readiness.overall}% ready for ${goal.title}, which is already competitive. This plan focuses on polishing your evidence and applying in parallel, while closing the last gaps (${list(gapNames, 2) || "none critical"}).`
-      : `You are ${readiness.overall}% ready for ${goal.title}. Your foundation in ${list(strengths, 3) || "your studies"} is solid; the biggest gaps are ${list(gapNames, 3)}. The plan closes the core gaps first, turns them into visible proof with a portfolio project, then moves you into applications${apply ? ` from ${apply.period}` : ""}.`;
+      ? `You are ${readiness.overall}% ready for ${goal.title}, which is already competitive. This plan focuses on polishing your evidence and applying in parallel, while closing the last gaps (${bold(list(gapNames, 2)) || "none critical"}).`
+      : `You are ${readiness.overall}% ready for ${goal.title}. Your foundation in ${list(strengths, 3) || "your studies"} is solid; the biggest gaps are ${bold(list(gapNames, 3))}. The plan closes the core gaps first, turns them into visible proof with a portfolio project, then moves you into applications${apply ? ` from ${apply.period}` : ""}.`;
 
   // Strategy
   const strategy: CareerPlan["strategy"] = [];
@@ -247,14 +262,14 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
     const focus = [...coreMissing.map((m) => m.name), ...skillGap.improving.map((i) => i.name)];
     strategy.push({
       title: `Close the core gaps first: ${list(focus, 3)}`,
-      detail: `${coreMissing[0]?.why ?? "These are the skills employers screen for first."} Learn them in the order of your roadmap, one focus skill per month.`,
+      detail: `${coreMissing[0]?.why ?? "These are the skills employers screen for first."} Learn them in the order of your roadmap, **one focus skill per month**.`,
     });
   }
   strategy.push({
     title: "Prove it with a project, not just courses",
     detail: existingProject
-      ? `Extend "${existingProject.name}" or build a new ${goal.title.toLowerCase()} project that uses your new skills end to end, so recruiters can see the result.`
-      : `Build one end-to-end ${goal.title.toLowerCase()} project that uses your new skills, and publish it with a clear README.`,
+      ? `Extend "${existingProject.name}" or build a new ${goal.title.toLowerCase()} project that uses your new skills **end to end**, so recruiters can see the result.`
+      : `Build one **end-to-end** ${goal.title.toLowerCase()} project that uses your new skills, and publish it with a clear README.`,
   });
   if (readiness.experience < 60) {
     strategy.push({
@@ -280,8 +295,8 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
     phases.push({
       name: "Foundation",
       timeframe: span(foundation),
-      goal: `Reach a working level in ${list(foundation.map((s) => s.title.replace(/^(Learn|Strengthen) /, "")), 3)}.`,
-      actions: foundation.map((s) => s.title).concat(["Log what you learn as short notes you can reuse in interviews"]).slice(0, 4),
+      goal: `Reach a working level in ${bold(list(foundation.map((s) => s.title.replace(/^(Learn|Strengthen) /, "")), 3))}.`,
+      actions: foundation.map((s) => s.title).concat(["Log what you learn as short notes you can reuse in interviews"]).slice(0, 3),
       deliverable: "Small exercises in a public repository showing each new skill",
     });
   }
@@ -290,8 +305,8 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
       name: "Build & prove",
       timeframe: span(build),
       goal: `Turn your skills into evidence a ${goal.title} hiring manager recognises.`,
-      actions: build.map((s) => s.title).concat(["Ask for feedback on your project in the community"]).slice(0, 4),
-      deliverable: `A portfolio-ready ${goal.title.toLowerCase()} project with a README and demo`,
+      actions: build.map((s) => s.title).concat(["Ask for feedback on your project in the community"]).slice(0, 3),
+      deliverable: `A **portfolio-ready** ${goal.title.toLowerCase()} project with a README and demo`,
     });
   }
   if (launch.length > 0) {
@@ -303,7 +318,7 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
         ...launch.map((s) => s.title),
         "Update your resume with the new skills and project",
         "Apply to your top matches and message one recruiter per week",
-      ].slice(0, 4),
+      ].slice(0, 3),
       deliverable: "Applications submitted and conversations with recruiters under way",
     });
   }
@@ -314,18 +329,18 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
       : []),
     ...(project ? [{ when: shortMonth(project.period), milestone: "Portfolio project live", measure: "Public repository with README, linked on your Career Profile" }] : []),
     ...(apply
-      ? [{ when: shortMonth(apply.period), milestone: "Applications out", measure: "At least 3 applications submitted to roles with 70%+ match" }]
+      ? [{ when: shortMonth(apply.period), milestone: "Applications out", measure: "At least **3 applications** submitted to roles with 70%+ match" }]
       : []),
     { when: "End of plan", milestone: `Ready for ${goal.title}`, measure: "Career Readiness of 80% or more" },
   ];
 
   const thisWeek = [
-    ...(skillStages[0] ? [`Start "${skillStages[0].title}" on your roadmap`] : []),
+    ...(skillStages[0] ? [`Start **"${skillStages[0].title}"** on your roadmap`] : []),
     ...(!person.openToOpportunities ? ["Turn on Open to Opportunities in Settings"] : []),
     ...(ctx.community ? [`Follow the ${ctx.community.name} community and read two recent posts`] : []),
     ...(ctx.opportunities[0] ? [`Save "${ctx.opportunities[0].title}" and note what it asks for`] : []),
     "Block three 90-minute learning sessions in your calendar",
-  ].slice(0, 5);
+  ].slice(0, 3);
 
   const risks: CareerPlan["risks"] = [
     {
@@ -356,12 +371,11 @@ export function writeRulesPlan(ctx: PlanContext): CareerPlan {
     summary,
     horizon: `${months} month${months > 1 ? "s" : ""} · ${span(roadmap.map((r) => ({ period: shortMonth(r.period) })))}`,
     whereYouAre: { strengths: strengthLines, gaps: gapLines },
-    strategy: strategy.slice(0, 4),
+    strategy: strategy.slice(0, 3),
     phases,
     weeklyRhythm: [
       "Three focused 90-minute sessions on the current roadmap skill",
       "One build session applying it to your project",
-      ctx.community ? `Share progress or a question in the ${ctx.community.name} community` : "Share progress with a peer or mentor",
       "Every Friday, review new opportunities and save the best matches",
     ],
     milestones,

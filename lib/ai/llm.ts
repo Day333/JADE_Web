@@ -113,6 +113,15 @@ function describeIssues(error: z.ZodError) {
     .join("; ");
 }
 
+/** Remove .catch()/.default() artifacts: they are for our validation, not the model. */
+function stripDefaults(node: unknown) {
+  if (Array.isArray(node)) node.forEach(stripDefaults);
+  else if (node && typeof node === "object") {
+    delete (node as Record<string, unknown>).default;
+    Object.values(node).forEach(stripDefaults);
+  }
+}
+
 export async function askLLM<Schema extends z.ZodType>({
   task,
   system,
@@ -125,6 +134,7 @@ export async function askLLM<Schema extends z.ZodType>({
   if (!isLLMConfigured()) return null;
 
   const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>;
+  stripDefaults(jsonSchema);
   let responseFormat: ResponseFormat = {
     type: "json_schema",
     json_schema: { name: task, strict: true, schema: jsonSchema },
@@ -134,6 +144,14 @@ export async function askLLM<Schema extends z.ZodType>({
     { role: "user", content: `Task: ${task}\n\nInput (JSON):\n${JSON.stringify(input)}\n\nReply with a single JSON object.` },
   ];
   const thinking = effort !== "low";
+
+  // The endpoint's schema-constrained decoding sometimes garbles a key (e.g. ":strengths")
+  // or drops fields, and repeats the exact same fault on a retry. Retries therefore run
+  // unconstrained, with the JSON Schema spelled out in the system prompt instead.
+  const fallBackToJsonObject = () => {
+    responseFormat = { type: "json_object" };
+    messages[0] = { role: "system", content: `${system}\n\nThe reply must be a JSON object matching this JSON Schema:\n${JSON.stringify(jsonSchema)}` };
+  };
 
   // Up to 3 attempts: schema-constrained, a plain-JSON fallback if the endpoint
   // rejects the schema, and one repair round if the output doesn't validate.
@@ -154,6 +172,7 @@ export async function askLLM<Schema extends z.ZodType>({
       } catch {
         console.warn(`[llm] ${task}: attempt ${attempt + 1} returned invalid JSON (${content.length} chars, finish=${finish})`);
         messages.push({ role: "assistant", content }, { role: "user", content: "That was not valid JSON. Reply with the JSON object only." });
+        if (responseFormat?.type === "json_schema") fallBackToJsonObject();
         continue;
       }
       const parsed = schema.safeParse(value);
@@ -163,11 +182,11 @@ export async function askLLM<Schema extends z.ZodType>({
         { role: "assistant", content },
         { role: "user", content: `The JSON does not match the required schema (${describeIssues(parsed.error)}). Reply with the corrected JSON object only.` },
       );
+      if (responseFormat?.type === "json_schema") fallBackToJsonObject();
     } catch (error) {
       if (error instanceof OpenAI.APIError && error.status === 400 && responseFormat?.type === "json_schema") {
         // Some models or schemas aren't supported in strict mode: describe the schema in the prompt instead.
-        responseFormat = { type: "json_object" };
-        messages[0] = { role: "system", content: `${system}\n\nThe reply must be a JSON object matching this JSON Schema:\n${JSON.stringify(jsonSchema)}` };
+        fallBackToJsonObject();
         continue;
       }
       if (error instanceof OpenAI.APIUserAbortError) {

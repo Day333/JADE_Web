@@ -1,9 +1,36 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarClock, CheckCircle2, Circle, CircleAlert, Compass, Flag, Repeat, ShieldAlert, Target } from "lucide-react";
 import { ForYouLabel, MatchBadge, ReadinessRing } from "@/components/app/match";
 import type { CareerPlan } from "@/lib/ai/career-plan";
 import type { Readiness } from "@/lib/ai/matching";
 import { cn } from "@/lib/utils";
+
+/**
+ * Plan text with a few **highlighted** phrases (marked by the model or the
+ * rules writer with double asterisks), rendered as marker-pen emphasis.
+ */
+function Rich({ text }: { text: string }) {
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <strong
+            key={i}
+            className="rounded-sm bg-emerald-500/15 px-1 py-0.5 font-semibold text-emerald-900 box-decoration-clone dark:bg-emerald-400/15 dark:text-emerald-200"
+          >
+            {part}
+          </strong>
+        ) : (
+          // Strip any stray, unpaired markers instead of showing them.
+          <Fragment key={i}>{part.replaceAll("**", "")}</Fragment>
+        ),
+      )}
+    </>
+  );
+}
 
 function Section({ title, icon: Icon, children, className }: { title: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode; className?: string }) {
   return (
@@ -58,7 +85,9 @@ export function PlanView({
           <div className="flex-1 space-y-3">
             <ForYouLabel>AI Career Plan</ForYouLabel>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{plan.headline}</h1>
-            <p className="max-w-3xl text-muted-foreground">{plan.summary}</p>
+            <p className="max-w-3xl text-muted-foreground">
+              <Rich text={plan.summary} />
+            </p>
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-700 dark:text-emerald-300">
                 <CalendarClock className="h-4 w-4" /> {plan.horizon}
@@ -77,20 +106,24 @@ export function PlanView({
       <div className="grid gap-6 md:grid-cols-2">
         <Section title="Your strengths" icon={CheckCircle2}>
           <ul className="space-y-2">
-            {plan.whereYouAre.strengths.map((s) => (
+            {plan.whereYouAre.strengths.slice(0, 3).map((s) => (
               <li key={s} className="flex gap-2 text-sm">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                {s}
+                <span>
+                  <Rich text={s} />
+                </span>
               </li>
             ))}
           </ul>
         </Section>
         <Section title="Your gaps to close" icon={CircleAlert}>
           <ul className="space-y-2">
-            {plan.whereYouAre.gaps.map((g) => (
+            {plan.whereYouAre.gaps.slice(0, 3).map((g) => (
               <li key={g} className="flex gap-2 text-sm">
                 <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
-                {g}
+                <span>
+                  <Rich text={g} />
+                </span>
               </li>
             ))}
           </ul>
@@ -103,11 +136,13 @@ export function PlanView({
       {/* Strategy */}
       <Section title="Your strategy" icon={Compass}>
         <ol className="grid gap-4 sm:grid-cols-2">
-          {plan.strategy.map((s, i) => (
+          {plan.strategy.slice(0, 3).map((s, i) => (
             <li key={s.title} className="rounded-lg border bg-muted/30 p-4">
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">0{i + 1}</span>
               <p className="mt-1 font-medium leading-snug">{s.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{s.detail}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <Rich text={s.detail} />
+              </p>
             </li>
           ))}
         </ol>
@@ -128,19 +163,25 @@ export function PlanView({
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{phase.timeframe}</span>
               </div>
               <p className="mt-3 text-lg font-semibold">{phase.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{phase.goal}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <Rich text={phase.goal} />
+              </p>
               <ul className="mt-4 flex-1 space-y-2">
-                {phase.actions.map((a) => (
+                {phase.actions.slice(0, 3).map((a) => (
                   <li key={a} className="flex gap-2 text-sm">
                     <Circle className="mt-1 h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                    {a}
+                    <span>
+                      <Rich text={a} />
+                    </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 rounded-lg bg-emerald-500/5 p-3 text-xs">
-                <span className="font-semibold text-emerald-700 dark:text-emerald-300">Deliverable: </span>
-                {phase.deliverable}
-              </p>
+              {phase.deliverable && (
+                <p className="mt-4 rounded-lg bg-emerald-500/5 p-3 text-xs">
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-300">Deliverable: </span>
+                  <Rich text={phase.deliverable} />
+                </p>
+              )}
             </li>
           ))}
         </ol>
@@ -149,10 +190,12 @@ export function PlanView({
       <div className="grid gap-6 lg:grid-cols-3">
         <Section title="Start this week" icon={Target}>
           <ul className="space-y-2">
-            {plan.thisWeek.map((t) => (
+            {plan.thisWeek.slice(0, 3).map((t) => (
               <li key={t} className="flex gap-2 text-sm">
                 <span className="mt-0.5 h-4 w-4 shrink-0 rounded border border-emerald-500/50" aria-hidden />
-                {t}
+                <span>
+                  <Rich text={t} />
+                </span>
               </li>
             ))}
           </ul>
@@ -162,22 +205,28 @@ export function PlanView({
         </Section>
         <Section title="Your weekly rhythm" icon={Repeat}>
           <ul className="space-y-2">
-            {plan.weeklyRhythm.map((r) => (
+            {plan.weeklyRhythm.slice(0, 3).map((r) => (
               <li key={r} className="flex gap-2 text-sm">
                 <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                {r}
+                <span>
+                  <Rich text={r} />
+                </span>
               </li>
             ))}
           </ul>
         </Section>
         <Section title="Milestones" icon={Flag}>
           <ol className="relative space-y-4 border-l pl-5">
-            {plan.milestones.map((m) => (
+            {plan.milestones.slice(0, 4).map((m) => (
               <li key={`${m.when}-${m.milestone}`} className="relative">
                 <span className="absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-emerald-500 bg-background" aria-hidden />
                 <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">{m.when}</p>
-                <p className="text-sm font-medium">{m.milestone}</p>
-                <p className="text-xs text-muted-foreground">{m.measure}</p>
+                <p className="text-sm font-medium">
+                  <Rich text={m.milestone} />
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <Rich text={m.measure} />
+                </p>
               </li>
             ))}
           </ol>
@@ -202,7 +251,9 @@ export function PlanView({
                         </div>
                         <MatchBadge score={job.match} />
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">{job.why}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        <Rich text={job.why} />
+                      </p>
                     </Link>
                   </li>
                 ))}
@@ -219,7 +270,9 @@ export function PlanView({
                         <p className="font-medium">{c.title}</p>
                         <MatchBadge score={c.match} />
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{c.why}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        <Rich text={c.why} />
+                      </p>
                     </Link>
                   </li>
                 ))}
@@ -231,10 +284,14 @@ export function PlanView({
 
       <Section title="Risks and how to handle them" icon={ShieldAlert}>
         <ul className="grid gap-4 md:grid-cols-3">
-          {plan.risks.map((r) => (
+          {plan.risks.slice(0, 3).map((r) => (
             <li key={r.risk} className="rounded-lg border p-4">
-              <p className="text-sm font-medium">{r.risk}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{r.mitigation}</p>
+              <p className="text-sm font-medium">
+                <Rich text={r.risk} />
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <Rich text={r.mitigation} />
+              </p>
             </li>
           ))}
         </ul>
