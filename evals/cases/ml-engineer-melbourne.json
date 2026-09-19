@@ -1,0 +1,186 @@
+{
+  "id": "ml-engineer-melbourne",
+  "description": "Physics PhD graduate → Machine Learning Engineer; strong research, no production experience",
+  "context": {
+    "today": "2026-10-01",
+    "person": {
+      "name": "Arjun Rao (example)",
+      "headline": "PhD candidate in Physics",
+      "location": "Melbourne, VIC",
+      "graduationYear": 2026,
+      "openToOpportunities": true,
+      "education": [
+        {
+          "degree": "PhD in Physics",
+          "school": "University of Melbourne",
+          "end": "2026-12"
+        }
+      ],
+      "experiences": [
+        {
+          "title": "Research Assistant",
+          "organization": "School of Physics, University of Melbourne",
+          "kind": "research",
+          "start": "2022-03",
+          "end": null
+        },
+        {
+          "title": "Lab Demonstrator",
+          "organization": "University of Melbourne",
+          "kind": "work",
+          "start": "2023-02",
+          "end": "2025-11"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Neural-network emulator for galaxy simulations",
+          "skills": [
+            "Python",
+            "PyTorch",
+            "Deep Learning"
+          ]
+        }
+      ]
+    },
+    "preferences": {
+      "workTypes": [
+        "full_time",
+        "graduate"
+      ],
+      "locations": [
+        "Melbourne",
+        "Sydney"
+      ],
+      "industries": [
+        "Technology",
+        "Finance"
+      ]
+    },
+    "goal": {
+      "careerId": "ml-engineer",
+      "title": "Machine Learning Engineer",
+      "summary": "Builds, deploys and maintains machine learning systems in production.",
+      "careerPath": [
+        "Machine Learning Intern",
+        "Junior ML Engineer",
+        "Machine Learning Engineer",
+        "Senior ML Engineer"
+      ]
+    },
+    "readiness": {
+      "overall": 64,
+      "skills": 70,
+      "projects": 72,
+      "experience": 40,
+      "portfolio": 55
+    },
+    "skillGap": {
+      "ready": [
+        "Python",
+        "PyTorch",
+        "Deep Learning"
+      ],
+      "improving": [
+        {
+          "name": "Software Engineering",
+          "level": "Basic",
+          "target": "Advanced"
+        }
+      ],
+      "missing": [
+        {
+          "name": "Docker",
+          "importance": "core",
+          "why": "Containers package models so they run the same way everywhere.",
+          "nextStep": "Containerise one of your models."
+        },
+        {
+          "name": "MLOps",
+          "importance": "core",
+          "why": "MLOps keeps models reliable, versioned and monitored after launch.",
+          "nextStep": "Add experiment tracking and a deployment pipeline to a project."
+        },
+        {
+          "name": "AWS",
+          "importance": "important",
+          "why": "Models are trained and served on cloud infrastructure.",
+          "nextStep": "Deploy a model endpoint on AWS."
+        }
+      ]
+    },
+    "roadmap": [
+      {
+        "period": "October 2026",
+        "title": "Learn Docker",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "November 2026",
+        "title": "Learn MLOps",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "December 2026",
+        "title": "Strengthen Software Engineering",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "January 2027",
+        "title": "Deploy your emulator as a service",
+        "kind": "project",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "February 2027",
+        "title": "Polish your portfolio",
+        "kind": "portfolio",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "March 2027",
+        "title": "Apply for ML Engineer roles",
+        "kind": "apply",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      }
+    ],
+    "opportunities": [
+      {
+        "jobId": "job-quokka-ml-intern",
+        "title": "Machine Learning Intern",
+        "company": "Quokka Labs",
+        "location": "Sydney, NSW",
+        "match": 78,
+        "verdict": "Strong match: your PyTorch research fits; Docker would help.",
+        "gaps": [
+          "Docker",
+          "MLOps"
+        ]
+      }
+    ],
+    "alternatives": [
+      {
+        "careerId": "data-scientist",
+        "title": "Data Scientist",
+        "match": 72,
+        "reasons": [
+          "Strong statistics from physics research",
+          "Deep learning project experience"
+        ]
+      }
+    ],
+    "community": {
+      "name": "ML Engineers",
+      "slug": "ml-engineers"
+    }
+  }
+}

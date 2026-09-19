@@ -1,0 +1,181 @@
+{
+  "id": "data-engineer-brisbane",
+  "description": "International Master of IT student with a part-time job → Data Engineer in Brisbane; one matching job",
+  "context": {
+    "today": "2026-10-01",
+    "person": {
+      "name": "Ravi Kumar (example)",
+      "headline": "Master of Information Technology student",
+      "location": "Brisbane, QLD",
+      "graduationYear": 2027,
+      "openToOpportunities": true,
+      "education": [
+        {
+          "degree": "Master of Information Technology",
+          "school": "University of Queensland",
+          "end": "2027-07"
+        }
+      ],
+      "experiences": [
+        {
+          "title": "Retail Assistant (part-time)",
+          "organization": "Riverside Grocers",
+          "kind": "work",
+          "start": "2025-03",
+          "end": null
+        }
+      ],
+      "projects": [
+        {
+          "name": "University timetable ETL pipeline",
+          "skills": [
+            "Python",
+            "SQL"
+          ]
+        }
+      ]
+    },
+    "preferences": {
+      "workTypes": [
+        "graduate",
+        "full_time"
+      ],
+      "locations": [
+        "Brisbane"
+      ],
+      "industries": [
+        "Technology",
+        "Energy"
+      ]
+    },
+    "goal": {
+      "careerId": "data-engineer",
+      "title": "Data Engineer",
+      "summary": "Builds and maintains the pipelines and warehouses that make data reliable and ready for analysis.",
+      "careerPath": [
+        "Data Engineering Intern",
+        "Junior Data Engineer",
+        "Data Engineer",
+        "Senior Data Engineer"
+      ]
+    },
+    "readiness": {
+      "overall": 52,
+      "skills": 55,
+      "projects": 50,
+      "experience": 30,
+      "portfolio": 40
+    },
+    "skillGap": {
+      "ready": [
+        "SQL"
+      ],
+      "improving": [
+        {
+          "name": "Python",
+          "level": "Basic",
+          "target": "Proficient"
+        }
+      ],
+      "missing": [
+        {
+          "name": "Data Engineering",
+          "importance": "core",
+          "why": "Building reliable pipelines is the core of the job.",
+          "nextStep": "Build one scheduled pipeline end to end."
+        },
+        {
+          "name": "Spark",
+          "importance": "important",
+          "why": "Large datasets are processed with distributed engines.",
+          "nextStep": "Rewrite one transformation in PySpark."
+        },
+        {
+          "name": "AWS",
+          "importance": "important",
+          "why": "Most pipelines run in the cloud.",
+          "nextStep": "Load data into a cloud warehouse on AWS."
+        },
+        {
+          "name": "Databases",
+          "importance": "useful",
+          "why": "Data modelling decides how usable a warehouse is.",
+          "nextStep": "Design a star schema for your project."
+        }
+      ]
+    },
+    "roadmap": [
+      {
+        "period": "October 2026",
+        "title": "Strengthen Python",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "November 2026",
+        "title": "Learn Data Engineering",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "December 2026",
+        "title": "Learn Spark",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "January 2027",
+        "title": "Build a cloud data pipeline",
+        "kind": "project",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "February 2027",
+        "title": "Polish your portfolio",
+        "kind": "portfolio",
+        "tasksDone": 0,
+        "tasksTotal": 2
+      },
+      {
+        "period": "March 2027",
+        "title": "Apply for Data Engineer roles",
+        "kind": "apply",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      }
+    ],
+    "opportunities": [
+      {
+        "jobId": "job-tidewater-junior-de",
+        "title": "Junior Data Engineer",
+        "company": "Tidewater Cloud",
+        "location": "Brisbane, QLD",
+        "match": 68,
+        "verdict": "Promising: strengthen Python and show one pipeline project.",
+        "gaps": [
+          "Data Engineering",
+          "Spark"
+        ]
+      }
+    ],
+    "alternatives": [
+      {
+        "careerId": "data-analyst",
+        "title": "Data Analyst",
+        "match": 70,
+        "reasons": [
+          "Strong SQL",
+          "Your ETL project shows you can handle messy data"
+        ]
+      }
+    ],
+    "community": {
+      "name": "Data Engineers",
+      "slug": "data-engineers"
+    }
+  }
+}

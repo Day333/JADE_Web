@@ -4,7 +4,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "eval": "node --conditions=react-server --env-file-if-exists=.env --env-file-if-exists=.env.local --import tsx evals/run.ts",
+    "eval:selftest": "node --conditions=react-server --import tsx evals/selftest.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
@@ -53,6 +55,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

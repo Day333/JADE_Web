@@ -1,0 +1,162 @@
+{
+  "id": "data-scientist-graduating-soon",
+  "description": "Graduates in December 2026, 3-month roadmap, a graduate role closing on 31 October; the plan should apply early",
+  "context": {
+    "today": "2026-10-01",
+    "person": {
+      "name": "Sofia Nguyen (example)",
+      "headline": "Master of Business Analytics student",
+      "location": "Sydney, NSW",
+      "graduationYear": 2026,
+      "openToOpportunities": true,
+      "education": [
+        {
+          "degree": "Master of Business Analytics",
+          "school": "UNSW Sydney",
+          "end": "2026-12"
+        }
+      ],
+      "experiences": [
+        {
+          "title": "Data Analytics Intern",
+          "organization": "Lighthouse Insurance",
+          "kind": "internship",
+          "start": "2026-01",
+          "end": "2026-06"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Customer churn model",
+          "skills": [
+            "Python",
+            "Statistics",
+            "Machine Learning"
+          ]
+        }
+      ]
+    },
+    "preferences": {
+      "workTypes": [
+        "graduate"
+      ],
+      "locations": [
+        "Sydney"
+      ],
+      "industries": [
+        "Finance",
+        "Insurance"
+      ]
+    },
+    "goal": {
+      "careerId": "data-scientist",
+      "title": "Data Scientist",
+      "summary": "Uses statistics, machine learning and domain knowledge to turn data into insights and predictive models that guide decisions.",
+      "careerPath": [
+        "Data Science Intern",
+        "Junior Data Scientist",
+        "Data Scientist",
+        "Senior Data Scientist",
+        "Lead Data Scientist"
+      ]
+    },
+    "readiness": {
+      "overall": 71,
+      "skills": 74,
+      "projects": 70,
+      "experience": 60,
+      "portfolio": 55
+    },
+    "skillGap": {
+      "ready": [
+        "Python",
+        "SQL",
+        "Statistics"
+      ],
+      "improving": [
+        {
+          "name": "Machine Learning",
+          "level": "Basic",
+          "target": "Proficient"
+        }
+      ],
+      "missing": [
+        {
+          "name": "Data Visualization",
+          "importance": "important",
+          "why": "Results must be communicated clearly to stakeholders.",
+          "nextStep": "Add a dashboard to your churn project."
+        },
+        {
+          "name": "A/B Testing",
+          "importance": "useful",
+          "why": "Common in product and marketing analytics.",
+          "nextStep": "Analyse one public A/B test dataset."
+        }
+      ]
+    },
+    "roadmap": [
+      {
+        "period": "October 2026",
+        "title": "Strengthen Machine Learning",
+        "kind": "skill",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "November 2026",
+        "title": "Improve and publish your churn model",
+        "kind": "project",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      },
+      {
+        "period": "December 2026",
+        "title": "Apply for Data Scientist roles",
+        "kind": "apply",
+        "tasksDone": 0,
+        "tasksTotal": 3
+      }
+    ],
+    "opportunities": [
+      {
+        "jobId": "job-harbourview-grad-ds",
+        "title": "Graduate Data Scientist",
+        "company": "Harbourview Bank",
+        "location": "Sydney, NSW",
+        "match": 81,
+        "verdict": "Strong match; applications close on 31 October 2026.",
+        "gaps": [
+          "Machine Learning"
+        ]
+      },
+      {
+        "jobId": "job-quokka-ml-intern",
+        "title": "Machine Learning Intern",
+        "company": "Quokka Labs",
+        "location": "Sydney, NSW",
+        "match": 64,
+        "verdict": "Stretch: needs PyTorch and Docker.",
+        "gaps": [
+          "PyTorch",
+          "Docker"
+        ]
+      }
+    ],
+    "alternatives": [
+      {
+        "careerId": "data-analyst",
+        "title": "Data Analyst",
+        "match": 78,
+        "reasons": [
+          "Analytics internship experience",
+          "Strong SQL and statistics"
+        ]
+      }
+    ],
+    "community": {
+      "name": "Data Scientists",
+      "slug": "data-scientists"
+    }
+  }
+}

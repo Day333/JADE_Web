@@ -1,5 +1,6 @@
 import "server-only";
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import OpenAI from "openai";
 import { z } from "zod";
 
@@ -17,7 +18,53 @@ import { z } from "zod";
  * askLLM never throws: missing config, network/API errors, truncated or invalid
  * output all return null so the caller can fall back to the rule-based result.
  */
-export type LLMTask = "parse_resume" | "hidden_potential" | "roadmap" | "career_plan";
+/** eval_judge is only used by the release-gate eval (evals/judge.ts). */
+export type LLMTask = "parse_resume" | "hidden_potential" | "roadmap" | "career_plan" | "eval_judge";
+
+// ---------------------------------------------------------------------------
+// Call tracing for the eval harness (evals/). Outside collectLLMCalls() nothing
+// is recorded and requests are sent exactly as before.
+// ---------------------------------------------------------------------------
+
+export type LLMAttemptOutcome =
+  | "ok"
+  | "invalid_json"
+  | "schema_mismatch"
+  | "schema_unsupported"
+  | "too_long"
+  | "timeout"
+  | "auth_error"
+  | "rate_limited"
+  | "api_error"
+  | "error";
+
+type AttemptFormat = "json_schema" | "json_object";
+type Usage = { inputTokens: number; outputTokens: number };
+
+export interface LLMCallRecord {
+  task: LLMTask;
+  model: string;
+  startedAt: string;
+  durationMs: number;
+  attempts: { format: AttemptFormat; outcome: LLMAttemptOutcome; detail?: string; durationMs: number; inputTokens?: number; outputTokens?: number }[];
+  result: "ok" | "fallback";
+  /** Why the caller fell back to its rule-based engine. */
+  fallbackReason?: string;
+  /** Summed over attempts; 0 when the endpoint reports no usage. */
+  inputTokens: number;
+  outputTokens: number;
+  /** The validated model output, before callers post-process it (e.g. sanitizePlan). */
+  output?: unknown;
+}
+
+const traceStore = new AsyncLocalStorage<LLMCallRecord[]>();
+
+/** Run `fn` and return a record of every askLLM call it made. */
+export async function collectLLMCalls<T>(fn: () => Promise<T>): Promise<{ result: T; calls: LLMCallRecord[] }> {
+  const calls: LLMCallRecord[] = [];
+  const result = await traceStore.run(calls, fn);
+  return { result, calls };
+}
 
 export interface AskLLMOptions<Schema extends z.ZodType> {
   task: LLMTask;
@@ -59,17 +106,59 @@ export function llmModel() {
   return process.env.LLM_MODEL || DEFAULT_MODEL;
 }
 
+/**
+ * Provider-specific request fields. DashScope (production) gets max_tokens and
+ * its enable_thinking extension exactly as before. OpenAI's own API rejects
+ * unknown fields and, for reasoning models, max_tokens, so a local run pointed
+ * at api.openai.com (e.g. to simulate generation) sends max_completion_tokens instead.
+ */
+export function providerParams(baseURL: string | undefined, maxTokens: number, thinking: boolean) {
+  const openAI = /^https?:\/\/api\.openai\.com(\/|$)/i.test(baseURL ?? "");
+  return openAI ? { max_completion_tokens: maxTokens } : { max_tokens: maxTokens, enable_thinking: thinking };
+}
+
+function startTrace(task: LLMTask) {
+  const store = traceStore.getStore();
+  const started = Date.now();
+  const record: LLMCallRecord | undefined = store
+    ? { task, model: llmModel(), startedAt: new Date(started).toISOString(), durationMs: 0, attempts: [], result: "fallback", inputTokens: 0, outputTokens: 0 }
+    : undefined;
+  return {
+    active: record !== undefined,
+    attempt(format: AttemptFormat, outcome: LLMAttemptOutcome, attemptStarted: number, detail?: string, usage?: Usage) {
+      if (!record) return;
+      record.attempts.push({ format, outcome, detail, durationMs: Date.now() - attemptStarted, ...usage });
+      if (usage) {
+        record.inputTokens += usage.inputTokens;
+        record.outputTokens += usage.outputTokens;
+      }
+    },
+    done<T>(value: T, fallbackReason?: string): T {
+      if (record && store) {
+        record.durationMs = Date.now() - started;
+        record.result = value === null ? "fallback" : "ok";
+        if (fallbackReason) record.fallbackReason = fallbackReason;
+        if (value !== null) record.output = value;
+        store.push(record);
+      }
+      return value;
+    },
+  };
+}
+
 /** Stream a completion and return the final answer text (reasoning is discarded). */
-async function complete(messages: Message[], responseFormat: ResponseFormat, thinking: boolean, maxTokens: number, timeoutMs: number) {
-  const params: OpenAI.Chat.ChatCompletionCreateParamsStreaming & { enable_thinking: boolean } = {
+async function complete(messages: Message[], responseFormat: ResponseFormat, thinking: boolean, maxTokens: number, timeoutMs: number, includeUsage = false) {
+  const params: OpenAI.Chat.ChatCompletionCreateParamsStreaming & { enable_thinking?: boolean } = {
     model: llmModel(),
     messages,
     stream: true,
-    max_tokens: maxTokens,
     response_format: responseFormat,
-    // DashScope extension: thinking improves plans and roadmaps; skip it for extraction.
-    enable_thinking: thinking,
+    // max_tokens + DashScope's enable_thinking (thinking improves plans and roadmaps;
+    // skipped for extraction), or the OpenAI equivalents; see providerParams.
+    ...providerParams(process.env.LLM_BASE_URL, maxTokens, thinking),
   };
+  // Only traced (eval) calls ask for token usage, so production requests are unchanged.
+  if (includeUsage) params.stream_options = { include_usage: true };
   // The SDK timeout only covers the wait for the first byte; this deadline also
   // covers the whole stream so a slow reply can't outlive the route's maxDuration.
   const deadline = new AbortController();
@@ -83,7 +172,9 @@ async function complete(messages: Message[], responseFormat: ResponseFormat, thi
     });
     let content = "";
     let finish: string | null = null;
+    let usage: Usage | undefined;
     for await (const chunk of stream) {
+      if (chunk.usage) usage = { inputTokens: chunk.usage.prompt_tokens, outputTokens: chunk.usage.completion_tokens };
       const choice = chunk.choices?.[0];
       if (!choice) continue;
       if (choice.delta?.content) content += choice.delta.content;
@@ -91,7 +182,7 @@ async function complete(messages: Message[], responseFormat: ResponseFormat, thi
     }
     // An abort mid-stream can end the iteration quietly with partial content.
     if (deadline.signal.aborted) throw new OpenAI.APIUserAbortError();
-    return { content, finish };
+    return { content, finish, usage };
   } finally {
     clearTimeout(timer);
   }
@@ -131,7 +222,8 @@ export async function askLLM<Schema extends z.ZodType>({
   maxTokens = 16000,
   timeoutMs = 100_000,
 }: AskLLMOptions<Schema>): Promise<z.infer<Schema> | null> {
-  if (!isLLMConfigured()) return null;
+  const trace = startTrace(task);
+  if (!isLLMConfigured()) return trace.done(null, "not_configured");
 
   const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>;
   stripDefaults(jsonSchema);
@@ -156,28 +248,36 @@ export async function askLLM<Schema extends z.ZodType>({
   // Up to 3 attempts: schema-constrained, a plain-JSON fallback if the endpoint
   // rejects the schema, and one repair round if the output doesn't validate.
   for (let attempt = 0; attempt < 3; attempt++) {
+    const attemptStarted = Date.now();
+    const format: AttemptFormat = responseFormat?.type === "json_schema" ? "json_schema" : "json_object";
     try {
       const started = Date.now();
       if (process.env.LLM_DEBUG) console.log(`[llm] ${task}: attempt ${attempt + 1} (${responseFormat?.type})`);
-      const { content, finish } = await complete(messages, responseFormat, thinking, maxTokens, timeoutMs);
+      const { content, finish, usage } = await complete(messages, responseFormat, thinking, maxTokens, timeoutMs, trace.active);
       // A repair round would not fit in the remaining time budget.
       if (Date.now() - started > timeoutMs * 0.6) attempt = 2;
       if (finish === "length") {
         console.warn(`[llm] ${task}: reply hit the token limit, using rules instead`);
-        return null;
+        trace.attempt(format, "too_long", attemptStarted, undefined, usage);
+        return trace.done(null, "too_long");
       }
       let value: unknown;
       try {
         value = extractJson(content);
       } catch {
         console.warn(`[llm] ${task}: attempt ${attempt + 1} returned invalid JSON (${content.length} chars, finish=${finish})`);
+        trace.attempt(format, "invalid_json", attemptStarted, `${content.length} chars, finish=${finish}`, usage);
         messages.push({ role: "assistant", content }, { role: "user", content: "That was not valid JSON. Reply with the JSON object only." });
         if (responseFormat?.type === "json_schema") fallBackToJsonObject();
         continue;
       }
       const parsed = schema.safeParse(value);
-      if (parsed.success) return parsed.data;
+      if (parsed.success) {
+        trace.attempt(format, "ok", attemptStarted, undefined, usage);
+        return trace.done(parsed.data);
+      }
       console.warn(`[llm] ${task}: attempt ${attempt + 1} did not match the schema: ${describeIssues(parsed.error)}`);
+      trace.attempt(format, "schema_mismatch", attemptStarted, describeIssues(parsed.error), usage);
       messages.push(
         { role: "assistant", content },
         { role: "user", content: `The JSON does not match the required schema (${describeIssues(parsed.error)}). Reply with the corrected JSON object only.` },
@@ -185,10 +285,22 @@ export async function askLLM<Schema extends z.ZodType>({
       if (responseFormat?.type === "json_schema") fallBackToJsonObject();
     } catch (error) {
       if (error instanceof OpenAI.APIError && error.status === 400 && responseFormat?.type === "json_schema") {
+        trace.attempt(format, "schema_unsupported", attemptStarted, error.message);
         // Some models or schemas aren't supported in strict mode: describe the schema in the prompt instead.
         fallBackToJsonObject();
         continue;
       }
+      const outcome: LLMAttemptOutcome =
+        error instanceof OpenAI.APIUserAbortError
+          ? "timeout"
+          : error instanceof OpenAI.AuthenticationError
+            ? "auth_error"
+            : error instanceof OpenAI.RateLimitError
+              ? "rate_limited"
+              : error instanceof OpenAI.APIError
+                ? "api_error"
+                : "error";
+      trace.attempt(format, outcome, attemptStarted, error instanceof Error ? error.message : undefined);
       if (error instanceof OpenAI.APIUserAbortError) {
         console.warn(`[llm] ${task}: no reply within ${Math.round(timeoutMs / 1000)} s; using rules instead`);
       } else if (error instanceof OpenAI.AuthenticationError) {
@@ -200,9 +312,9 @@ export async function askLLM<Schema extends z.ZodType>({
       } else {
         console.warn(`[llm] ${task}: ${error instanceof Error ? error.message : "request failed"}; using rules instead`);
       }
-      return null;
+      return trace.done(null, outcome);
     }
   }
   console.warn(`[llm] ${task}: no valid output after retries, using rules instead`);
-  return null;
+  return trace.done(null, "no_valid_output");
 }

@@ -35,3 +35,6 @@ coverage/
 
 # Claude Code 本机设置
 .claude/settings.local.json
+
+# Eval 报告（含完整 trace，本地/CI 生成，不提交）
+evals/reports/

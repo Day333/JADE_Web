@@ -1,0 +1,46 @@
+# Release gate for AI Career Plan quality (see evals/README.md).
+# In Vercel → Settings → Build and Deployment → Deployment Checks, require the
+# "eval-gate" check so a production deployment is only promoted when it passes.
+name: eval-gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  eval-gate:
+    name: eval-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # The site's own LLM variables — same values as in Vercel.
+      # CI=true (set by GitHub) makes a missing LLM block the release.
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      # Optional separate judge (e.g. OpenAI). Leave unset to judge with the site's LLM.
+      EVAL_JUDGE_API_KEY: ${{ secrets.EVAL_JUDGE_API_KEY }}
+      EVAL_JUDGE_MODEL: ${{ vars.EVAL_JUDGE_MODEL }}
+      EVAL_JUDGE_BASE_URL: ${{ vars.EVAL_JUDGE_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run eval:selftest
+      - run: npm run eval
+      - name: Show report in the run summary
+        if: always()
+        run: cat evals/reports/latest.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "No eval report was produced." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload report and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: evals/reports/
+          if-no-files-found: ignore
