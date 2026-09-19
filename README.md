@@ -79,8 +79,9 @@ npm run dev            # 打开 http://localhost:3000
 | `…120600_skills_created_by_index.sql` | 性能索引 |
 | `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
 | `20260919130000_pro_membership.sql` | Career Lighthouse Pro 会员标记（`profiles.is_pro`，PDF 下载权限） |
+| `20260920120000_real_jobs.sql` | 真实岗位数据（21 家公司、20 个岗位，来自公开招聘广告，`is_sample = false`） |
 
-示例公司和岗位（`is_sample = true`）都是虚构的，没有真实招聘者，所以不能和它们聊天。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
+示例公司和岗位（`is_sample = true`）都是虚构的。`real_jobs` 里的岗位来自公开招聘广告（广告未给出公司名的用虚构名代替）。两类岗位都没有入驻的招聘者，"Chat with Recruiter" 按钮会置灰并说明原因。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
 
 ## 部署
 
