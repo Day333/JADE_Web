@@ -59,6 +59,8 @@ async function main() {
   process.env.LLM_BASE_URL = mock.baseURL;
   process.env.DASHSCOPE_API_KEY = "test-key";
   delete process.env.LLM_MODEL;
+  // A real separate judge (CI secrets) would bypass the mock; tests pass their own judge env when needed.
+  for (const k of ["EVAL_JUDGE_API_KEY", "EVAL_JUDGE_MODEL", "EVAL_JUDGE_BASE_URL", "EVAL_JUDGE_TEMPERATURE"]) delete process.env[k];
 
   console.log("Tracing in askLLM");
 
