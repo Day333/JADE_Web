@@ -24,7 +24,8 @@ export const config = {
     /** Share of the core/important gaps and improving skills the plan must address. */
     minGapCoverage: 0.6,
     minPhases: 2,
-    maxPhases: 5,
+    /** sanitizePlan caps phases at 4, so more than 4 can never reach the page. */
+    maxPhases: 4,
   },
 
   gate: {

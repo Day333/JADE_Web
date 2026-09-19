@@ -241,8 +241,36 @@ async function main() {
     assert.equal(evaluateGate([outcome(skipped)], { llmConfigured: false, requireLLM: true }).pass, false);
     assert.equal(evaluateGate([outcome({ status: "error", reason: "timeout" })], opts).pass, false);
   });
+  await test("every case falling back to rules: warning locally, blocks in CI", () => {
+    const fellBack: CaseOutcome = {
+      caseId: "fb",
+      checks: [{ name: "llm_used", group: "trajectory", status: "fail", detail: "fell back to rules" }],
+      judge: scored(5),
+    };
+    assert.equal(evaluateGate([fellBack], { llmConfigured: true, requireLLM: false }).pass, true);
+    assert.equal(evaluateGate([fellBack], { llmConfigured: true, requireLLM: true }).pass, false);
+    // One real AI case among fallbacks keeps the gate open.
+    assert.equal(evaluateGate([fellBack, outcome(scored(5))], { llmConfigured: true, requireLLM: true }).pass, true);
+  });
+  await test("highlight markers in plan text don't break the matchers", () => {
+    const marked = JSON.parse(JSON.stringify(goodPlan).replaceAll("Data Visualization", "**Data Visualization**")) as typeof goodPlan;
+    const checks = runChecks({ evalCase, llmConfigured: true, source: "ai", model: "m", plan: marked, calls: [] });
+    assert.equal(status(checks, "gap_coverage"), "pass");
+    assert.equal(status(checks, "ready_not_gap"), "pass");
+  });
   await test("invented job/career ids block; other rule failures only warn", () => {
-    const bad = runChecks({ evalCase, llmConfigured: true, source: "ai", model: "m", plan: badPlan, calls: [] });
+    const okCall = {
+      task: "career_plan" as const,
+      model: "m",
+      startedAt: "",
+      durationMs: 1000,
+      attempts: [{ format: "json_schema" as const, outcome: "ok" as const, durationMs: 1000 }],
+      result: "ok" as const,
+      inputTokens: 0,
+      outputTokens: 0,
+      output: badPlan,
+    };
+    const bad = runChecks({ evalCase, llmConfigured: true, source: "ai", model: "m", plan: badPlan, calls: [okCall] });
     const g = evaluateGate([{ caseId: "bad", checks: bad, judge: scored(5) }], opts);
     assert.equal(g.pass, false);
     assert.ok(g.reasons.every((r) => r.includes("job_ids_valid") || r.includes("career_ids_valid")));

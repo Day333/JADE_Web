@@ -85,19 +85,29 @@ export function rawPlan(run: EvalRun): CareerPlan | null {
   return call?.result === "ok" ? (call.output as CareerPlan) : null;
 }
 
+/** Plans mark key phrases with **...** (rendered as highlights); strip the markers before matching. */
+export function stripHighlights(text: string): string {
+  return text.replaceAll("**", "");
+}
+
 export function planText(plan: CareerPlan): string {
-  return [
-    plan.headline,
-    plan.summary,
-    ...plan.whereYouAre.strengths,
-    ...plan.whereYouAre.gaps,
-    ...plan.strategy.flatMap((s) => [s.title, s.detail]),
-    ...plan.phases.flatMap((p) => [p.name, p.goal, p.deliverable, ...p.actions]),
-    ...plan.weeklyRhythm,
-    ...plan.milestones.flatMap((m) => [m.milestone, m.measure]),
-    ...plan.risks.flatMap((r) => [r.risk, r.mitigation]),
-    ...plan.thisWeek,
-  ].join("\n");
+  return stripHighlights(
+    [
+      plan.headline,
+      plan.summary,
+      plan.horizon,
+      ...plan.whereYouAre.strengths,
+      ...plan.whereYouAre.gaps,
+      ...plan.strategy.flatMap((s) => [s.title, s.detail]),
+      ...plan.phases.flatMap((p) => [p.name, p.goal, p.deliverable, ...p.actions]),
+      ...plan.weeklyRhythm,
+      ...plan.milestones.flatMap((m) => [m.milestone, m.measure]),
+      ...plan.targetOpportunities.map((o) => o.why),
+      ...plan.alternativePaths.map((a) => a.why),
+      ...plan.risks.flatMap((r) => [r.risk, r.mitigation]),
+      ...plan.thisWeek,
+    ].join("\n"),
+  );
 }
 
 export function callCost(call: LLMCallRecord): number | null {
@@ -224,7 +234,7 @@ function groundingChecks(run: EvalRun): CheckResult[] {
   }
 
   // 4. Skills the person already has must not be listed as gaps.
-  const gapText = plan.whereYouAre.gaps.join("\n");
+  const gapText = stripHighlights(plan.whereYouAre.gaps.join("\n"));
   const readyAsGap = ctx.skillGap.ready.filter((s) => mentions(gapText, s));
   results.push(
     readyAsGap.length > 0

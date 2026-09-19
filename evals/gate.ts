@@ -4,7 +4,8 @@
  *   - the judge scores any case below config.judge.minGrounding,
  *   - the judge can't be trusted: it errors, or it scores the hallucinated
  *     control plan above config.judge.controlMaxGrounding,
- *   - in CI, the LLM isn't configured (nothing real was checked).
+ *   - in CI, the LLM isn't configured or every case fell back to the
+ *     rule-based engine (nothing real was checked either way).
  * Everything else (other rule checks, low personalization/feasibility/actionability,
  * hallucinations the judge lists without failing grounding) is reported as a warning.
  */
@@ -36,6 +37,17 @@ export function evaluateGate(
 
   if (!opts.llmConfigured) {
     const msg = "LLM not configured, so only the rule-based fallback was evaluated";
+    if (opts.requireLLM) reasons.push(`${msg} (required in CI)`);
+    else warnings.push(msg);
+  }
+  // Same reasoning when the LLM is configured but never produced a plan:
+  // a green gate would certify AI output that was never actually checked.
+  const allFellBack =
+    opts.llmConfigured &&
+    cases.length > 0 &&
+    cases.every((c) => c.checks.some((ch) => ch.name === "llm_used" && ch.status === "fail"));
+  if (allFellBack) {
+    const msg = "every case fell back to the rule-based engine, so no AI output was checked";
     if (opts.requireLLM) reasons.push(`${msg} (required in CI)`);
     else warnings.push(msg);
   }
