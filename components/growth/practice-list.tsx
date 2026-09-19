@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Bot, BrainCircuit, Check, ChevronDown, Code2, LineChart, PartyPopper } from "lucide-react";
+import { BarChart3, Bot, BrainCircuit, Check, ChevronDown, Code2, HeartHandshake, LineChart, Network, Palette, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { setQuestionDone } from "@/lib/actions/practice";
@@ -11,7 +11,11 @@ import { cn } from "@/lib/utils";
 export const CATEGORY_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
   "ai-agents": { label: "AI Agents & LLMs", icon: Bot },
   "machine-learning": { label: "Machine Learning", icon: BrainCircuit },
+  "data-science": { label: "Data Science", icon: BarChart3 },
   "software-engineering": { label: "Software Engineering", icon: Code2 },
+  "system-design": { label: "System Design", icon: Network },
+  behavioral: { label: "Behavioural", icon: HeartHandshake },
+  "product-design": { label: "Product & Design", icon: Palette },
   finance: { label: "Finance", icon: LineChart },
 };
 
