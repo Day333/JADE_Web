@@ -3,6 +3,8 @@ import type { Database, Enums, Tables } from "@/lib/database.types";
 export type { Database };
 
 export type Profile = Tables<"profiles">;
+export type PracticeQuestion = Tables<"practice_questions">;
+export type Achievement = Tables<"achievements">;
 export type Skill = Tables<"skills">;
 export type Career = Tables<"careers">;
 export type CareerSkill = Tables<"career_skills">;

@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          description: string
+          icon: string
+          id: string
+          name: string
+          points: number
+          sort: number
+          tier: string
+        }
+        Insert: {
+          description: string
+          icon: string
+          id: string
+          name: string
+          points?: number
+          sort?: number
+          tier: string
+        }
+        Update: {
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points?: number
+          sort?: number
+          tier?: string
+        }
+        Relationships: []
+      }
       application_events: {
         Row: {
           actor_id: string | null
@@ -1132,6 +1162,72 @@ export type Database = {
           },
         ]
       }
+      practice_progress: {
+        Row: {
+          done_at: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          done_at?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          done_at?: string
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_progress_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "practice_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practice_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_questions: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          difficulty: string
+          id: string
+          question: string
+          sort: number
+          tags: string[]
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          difficulty: string
+          id: string
+          question: string
+          sort?: number
+          tags?: string[]
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          question?: string
+          sort?: number
+          tags?: string[]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           allow_recruiter_contact: boolean
@@ -1552,6 +1648,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_skills: {
         Row: {
           level: number
@@ -1625,6 +1754,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_achievements: { Args: never; Returns: string[] }
       set_application_shortlisted: {
         Args: { p_application: string; p_value: boolean }
         Returns: undefined

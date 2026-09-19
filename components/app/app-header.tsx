@@ -11,6 +11,8 @@ const SEEKER_NAV: NavItem[] = [
   { href: "/careers", label: "Careers", match: ["/careers", "/skill-gap", "/roadmap", "/plan"] },
   { href: "/community", label: "Community", match: ["/community", "/journey"] },
   { href: "/jobs", label: "Jobs" },
+  { href: "/practice", label: "Practice" },
+  { href: "/progress", label: "Progress" },
   { href: "/applications", label: "Applications" },
 ];
 

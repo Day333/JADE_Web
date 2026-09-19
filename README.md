@@ -16,6 +16,7 @@ Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职�
 | 职业档案 | `/profile`、`/settings` | 完整 Career Profile 编辑；隐私与可见性 |
 | 职业规划 | `/careers`、`/careers/[id]`、`/skill-gap`、`/roadmap`、`/plan` | 职业推荐、隐藏职业潜力、职业详情、技能差距、分阶段路线图、Career Readiness、AI Career Plan |
 | 社区 | `/community`、`/community/c/[slug]`、`/community/post/[id]`、`/journey`、`/u/[id]` | 职业/公司/大学社区、帖子、Career Journey、公开主页、关注 |
+| 成长激励 | `/practice`、`/progress` | 面试题库（AI Agents / 机器学习 / 软件 / 金融，60 题原创中英模拟答案为英文）、GitHub 风格活动热力图（投递 / 面试 / 刷题）、统计面板、成就徽章体系 |
 | 私信 | `/messages` | 用户私信与招聘者聊天（实时） |
 | 求职 | `/jobs`、`/jobs/[id]`、`/jobs/[id]/apply`、`/applications` | 个性化岗位推荐、匹配度、投递确认、申请追踪 |
 | 招聘者 | `/employer`、`/employer/jobs/new`、`/employer/jobs/[id]/candidates`、`/employer/candidates/[id]`、`/employer/discover` | 发布岗位、候选人管理、技能证据、主动发现人才、邀请投递/面试 |
@@ -33,6 +34,8 @@ Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职�
 | AI Career Plan（`/plan`） | 首次打开或点击 Regenerate | 关 | 240 秒 | `career-plan.ts` |
 
 实测（kimi-k3）：简历解析约 30 秒，路线图约 35 秒，生涯规划约 50 秒。开启思考模式会让时间翻倍，质量提升不明显，所以都关了；需要时在 `lib/ai/index.ts` 里把对应调用的 `effort` 改成 `"medium"` 或 `"high"`。
+
+**成长激励体系**：`/practice` 是面试题库（读题 → 自答 → 对照模拟答案 → 打勾），`/progress` 展示 LeetCode 风格统计（投递 / 面试 / 刷题 / 声望，均含"最近一周"）、GitHub 风格 12 个月活动热力图和 14 枚成就徽章（铜银金三档 + 积分）。所有数字都从现有数据推导（application_events、practice_progress、posts、点赞），没有需要同步的计数器；徽章由 `refresh_achievements()` 在服务端按数据判定并发通知，前端无法伪造。题目原创（Agent 方向的主题参考了开源社区的面试整理，内容全部重写）。
 
 **AI Career Plan 页面与 PDF**：`/plan` 页面只显示计划摘要（现状、策略、阶段概览、本周行动）；完整版（每阶段行动清单、每周节奏、里程碑、匹配岗位、备选路径、风险）由 `/plan/pdf` 生成 PDF 下载（`pdfkit`，服务端生成）。下载是 **Career Lighthouse Pro** 功能（`profiles.is_pro`），测试期免费：非 Pro 用户点下载会弹出升级窗口，一键开通。生成计划时页面会显示分步进度动画。
 
@@ -80,6 +83,8 @@ npm run dev            # 打开 http://localhost:3000
 | `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
 | `20260919130000_pro_membership.sql` | Career Lighthouse Pro 会员标记（`profiles.is_pro`，PDF 下载权限） |
 | `20260920120000_real_jobs.sql` | 真实岗位数据（21 家公司、20 个岗位，来自公开招聘广告，`is_sample = false`） |
+| `20260920130000_growth_system.sql` | 成长体系：练习题表、进度表、成就目录与发放函数 `refresh_achievements()`（security definer，按数据推导，用户无法自封徽章） |
+| `20260920140000_practice_questions.sql` | 面试题库种子数据（60 题原创英文题目与模拟答案） |
 
 示例公司和岗位（`is_sample = true`）都是虚构的。`real_jobs` 里的岗位来自公开招聘广告（广告未给出公司名的用虚构名代替）。两类岗位都没有入驻的招聘者，"Chat with Recruiter" 按钮会置灰并说明原因。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, Circle, Compass, MessagesSquare, Sparkles, Target } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, Circle, Compass, MessagesSquare, Sparkles, Target, TrendingUp } from "lucide-react";
 import { ForYouLabel, MatchBadge, MeterRow, ReadinessRing, SkillChip, type ChipStatus } from "@/components/app/match";
 import { EmptyState } from "@/components/app/page-parts";
 import { Slogan } from "@/components/app/slogan";
@@ -264,6 +264,11 @@ export default async function DashboardPage() {
               <Button asChild variant="outline" className="w-full">
                 <Link href="/plan">
                   <Sparkles className="h-4 w-4" /> View my AI Career Plan
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full">
+                <Link href="/progress">
+                  <TrendingUp className="h-4 w-4" /> My progress &amp; badges
                 </Link>
               </Button>
             </div>
