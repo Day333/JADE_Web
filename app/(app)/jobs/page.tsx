@@ -108,6 +108,17 @@ export default async function JobsPage({ searchParams }: { searchParams: SearchP
   }
   const topStrength = strong[0]?.match.strengths.slice(0, 2).map((id) => skillName(catalog, id));
 
+  // With hundreds of listings, render a page at a time; "Show more" re-requests with a higher cap.
+  const PAGE_SIZE = 48;
+  const showRaw = Number(Array.isArray(sp.show) ? sp.show[0] : sp.show);
+  const show = Number.isFinite(showRaw) && showRaw > 0 ? Math.floor(showRaw) : PAGE_SIZE;
+  const visible = filtered.slice(0, show);
+  const showMoreHref = () => {
+    const params = new URLSearchParams({ ...values });
+    params.set("show", String(show + PAGE_SIZE));
+    return `/jobs?${params.toString()}`;
+  };
+
   return (
     <div className="space-y-12">
       <PageHeader
@@ -233,18 +244,32 @@ export default async function JobsPage({ searchParams }: { searchParams: SearchP
         </div>
         <JobFilters key={JSON.stringify(values)} values={values} options={options} />
         {filtered.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map(({ job, match }) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                match={match}
-                catalog={catalog}
-                levels={levels}
-                application={applications.get(job.id)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {visible.map(({ job, match }) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  match={match}
+                  catalog={catalog}
+                  levels={levels}
+                  application={applications.get(job.id)}
+                />
+              ))}
+            </div>
+            {filtered.length > visible.length && (
+              <div className="flex flex-col items-center gap-1 pt-2">
+                <Button asChild variant="outline">
+                  <Link href={showMoreHref()} scroll={false}>
+                    Show more jobs
+                  </Link>
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Showing {visible.length} of {filtered.length}
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState
             icon={Compass}

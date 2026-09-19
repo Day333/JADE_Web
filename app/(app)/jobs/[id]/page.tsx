@@ -229,6 +229,23 @@ export default async function JobDetailPage({ params }: { params: Params }) {
           {job.description && (
             <Section title="Job Description">
               <p className="whitespace-pre-line text-sm leading-relaxed">{job.description}</p>
+              {(job.description_is_excerpt || job.source_url?.startsWith("https://")) && (
+                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
+                  {job.description_is_excerpt && (
+                    <span className="text-muted-foreground">This is an excerpt of the original job ad.</span>
+                  )}
+                  {job.source_url?.startsWith("https://") && (
+                    <a
+                      href={job.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                    >
+                      View original posting <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                    </a>
+                  )}
+                </div>
+              )}
             </Section>
           )}
           {job.responsibilities.length > 0 && (
@@ -360,35 +377,47 @@ export default async function JobDetailPage({ params }: { params: Params }) {
               </ul>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Skills You Already Have</h3>
-              {haveSkills.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {haveSkills.map((sid) => (
-                    <SkillChip key={sid} name={`${skillName(catalog, sid)} · ${LEVEL_LABELS[levels.get(sid) ?? 1]}`} status="have" />
-                  ))}
+            {job.required_skills.length + job.preferred_skills.length === 0 ? (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">Skills Match</h3>
+                <p className="text-sm text-muted-foreground">
+                  This posting doesn&apos;t list specific skills, so your match is based on your preferences and career
+                  goal. Read the job ad to judge the skill fit yourself.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">Skills You Already Have</h3>
+                  {haveSkills.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {haveSkills.map((sid) => (
+                        <SkillChip key={sid} name={`${skillName(catalog, sid)} · ${LEVEL_LABELS[levels.get(sid) ?? 1]}`} status="have" />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">None of this role&apos;s listed skills are on your profile yet.</p>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">None of this role&apos;s listed skills are on your profile yet.</p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Missing Skills</h3>
-              {match.gaps.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {match.gaps.map((g) => (
-                    <SkillChip
-                      key={g.skillId}
-                      name={`${skillName(catalog, g.skillId)}${g.required ? "" : " (preferred)"}`}
-                      status={(levels.get(g.skillId) ?? 0) > 0 ? "improving" : "gap"}
-                    />
-                  ))}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">Missing Skills</h3>
+                  {match.gaps.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {match.gaps.map((g) => (
+                        <SkillChip
+                          key={g.skillId}
+                          name={`${skillName(catalog, g.skillId)}${g.required ? "" : " (preferred)"}`}
+                          status={(levels.get(g.skillId) ?? 0) > 0 ? "improving" : "gap"}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-emerald-700 dark:text-emerald-300">No gaps. You cover every listed skill.</p>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-emerald-700 dark:text-emerald-300">No gaps. You cover every listed skill.</p>
-              )}
-            </div>
+              </>
+            )}
 
             <div className="space-y-3 border-t pt-4">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold">

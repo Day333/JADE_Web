@@ -5,26 +5,31 @@ import { matchJob, type JobMatch } from "@/lib/ai/matching";
 import { createClient } from "@/lib/supabase/server";
 import type { CareerProfileData, Catalog, Company, Job } from "@/lib/types";
 
-export type JobWithCompany = Job & { company: Pick<Company, "id" | "name" | "slug" | "industry" | "location" | "is_sample"> | null };
+type CompanyCard = Pick<Company, "id" | "name" | "slug" | "industry" | "location" | "is_sample">;
 
-const JOB_SELECT = "*, company:companies(id, name, slug, industry, location, is_sample)";
+/** List rows skip the long JD fields — with hundreds of imported postings the full descriptions would dwarf every page that ranks jobs. */
+export type JobWithCompany = Omit<Job, "description" | "responsibilities" | "requirements" | "preferred_qualifications"> & { company: CompanyCard | null };
+export type JobDetail = Job & { company: CompanyCard | null };
+
+const COMPANY_SELECT = "company:companies(id, name, slug, industry, location, is_sample)";
+const JOB_LIST_SELECT = `id, company_id, posted_by, title, location, job_type, industry, career_id, experience_level, education_requirement, salary_range, required_skills, preferred_skills, grad_years, deadline, status, is_sample, source_board, source_external_id, source_url, source_posted_at, source_group, description_is_excerpt, created_at, updated_at, ${COMPANY_SELECT}`;
 
 /** All open jobs with their company, newest first. */
 export const loadOpenJobs = cache(async (): Promise<JobWithCompany[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("jobs")
-    .select(JOB_SELECT)
+    .select(JOB_LIST_SELECT)
     .eq("status", "open")
     .order("created_at", { ascending: false })
-    .limit(500);
+    .limit(2000);
   return (data ?? []) as JobWithCompany[];
 });
 
-export async function loadJob(jobId: string): Promise<JobWithCompany | null> {
+export async function loadJob(jobId: string): Promise<JobDetail | null> {
   const supabase = await createClient();
-  const { data } = await supabase.from("jobs").select(JOB_SELECT).eq("id", jobId).maybeSingle();
-  return (data as JobWithCompany | null) ?? null;
+  const { data } = await supabase.from("jobs").select(`*, ${COMPANY_SELECT}`).eq("id", jobId).maybeSingle();
+  return (data as JobDetail | null) ?? null;
 }
 
 export interface RankedJob {
