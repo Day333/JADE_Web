@@ -166,3 +166,12 @@ proxy.ts            每次请求刷新登录状态，未登录访问受保护页
 ```
 
 数据库连接方式与踩过的坑见 [CONNECTION.md](CONNECTION.md)。
+
+## 👥 团队 JADES
+
+| 成员 | 角色 |
+|---|---|
+| **Jianling Tang** | Data Scientist（数据科学） |
+| **Kuiye Ding** | Software Engineer（软件工程） |
+| **Xiangqi Peng** | Communication Lead（对外传播） |
+| **Yichen Duan** | Business Analyst（商业分析） |

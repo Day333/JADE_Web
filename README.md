@@ -166,3 +166,12 @@ proxy.ts            Refreshes the session per request; redirects signed-out visi
 ```
 
 Database connection notes and gotchas: [CONNECTION.md](CONNECTION.md).
+
+## 👥 Team JADES
+
+| Name | Role |
+|---|---|
+| **Jianling Tang** | Data Scientist |
+| **Kuiye Ding** | Software Engineer |
+| **Xiangqi Peng** | Communication Lead |
+| **Yichen Duan** | Business Analyst |
