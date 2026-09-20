@@ -79,7 +79,7 @@
 
 **AI Career Plan 页面与 PDF**：`/plan` 页面只显示计划摘要（现状、策略、阶段概览、本周行动）；完整版（每阶段行动清单、每周节奏、里程碑、匹配岗位、备选路径、风险）由 `/plan/pdf` 生成 PDF 下载（`pdfkit`，服务端生成）。下载是 **Career Lighthouse Pro** 功能（`profiles.is_pro`），测试期免费：非 Pro 用户点下载会弹出升级窗口，一键开通。生成计划时页面会显示分步进度动画。
 
-**配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
+**配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。**LLM 功能目前处于暂停状态**（比赛结束后暂不开放）：生产环境未设置 `LLM_ENABLED`，所有 AI 功能自动使用规则算法；要重新开启，在密钥之外再设置 `LLM_ENABLED=1` 即可。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
 
 ## 🧱 技术栈
 

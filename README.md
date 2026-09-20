@@ -79,7 +79,7 @@ Measured with GPT5.6: resume parsing ~30 s, roadmap ~35 s, career plan ~50 s. Th
 
 **AI Career Plan page and PDF**: `/plan` shows a summary only (where you are, strategy, phases at a glance, this week). The full version (per-phase action lists, weekly rhythm, milestones, matched jobs, alternative paths, risks) is generated as a PDF by `/plan/pdf` (`pdfkit`, server-side). Downloading is a **Career Lighthouse Pro** feature (`profiles.is_pro`), free during the beta: non-Pro users get an upgrade dialog with one-click activation. Plan generation shows a step-by-step progress animation.
 
-**Configuration**: set `DASHSCOPE_API_KEY`, `LLM_BASE_URL` and optionally `LLM_MODEL` in `.env` and on Vercel; switching to any other OpenAI-compatible service only requires changing these three. If they are missing, or a call fails, times out or returns malformed output, `askLLM()` returns `null` and the feature falls back to its rule-based algorithm — pages never break. `/plan` states which model generated the plan.
+**Configuration**: set `DASHSCOPE_API_KEY`, `LLM_BASE_URL` and optionally `LLM_MODEL` in `.env` and on Vercel; switching to any other OpenAI-compatible service only requires changing these three. **LLM features are currently paused** (post-hackathon): `LLM_ENABLED` is unset in production, so every AI feature runs on its rule-based fallback. Set `LLM_ENABLED=1` alongside the keys to switch the model back on. If they are missing, or a call fails, times out or returns malformed output, `askLLM()` returns `null` and the feature falls back to its rule-based algorithm — pages never break. `/plan` states which model generated the plan.
 
 ## 🧱 Stack
 

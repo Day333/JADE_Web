@@ -99,6 +99,11 @@ function getClient() {
 }
 
 export function isLLMConfigured() {
+  // LLM features are paused on production after the hackathon: every AI feature
+  // falls back to its rule-based generator. VERCEL=1 only exists on Vercel, so
+  // local dev and the CI eval gate still exercise the real LLM path. Set
+  // LLM_ENABLED=1 on Vercel (or remove this guard) to switch the model back on.
+  if (process.env.VERCEL === "1" && process.env.LLM_ENABLED !== "1") return false;
   return Boolean((process.env.DASHSCOPE_API_KEY || process.env.LLM_API_KEY) && process.env.LLM_BASE_URL);
 }
 
