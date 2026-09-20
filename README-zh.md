@@ -1,0 +1,133 @@
+# Career Lighthouse
+
+[English](README.md) | 中文
+
+线上地址：**https://jade-web-five.vercel.app**（代码仓库沿用原名 `JADE_Web`）· 技术选型详见[技术报告](TECH_REPORT.md)
+
+Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职业成长、职业社区与招聘平台（网站界面为英文）。围绕用户的 Career Profile，覆盖完整流程：
+
+**职业认知 → 职业发现 → 职业规划 → 能力提升 → 社区交流 → 岗位发现 → 招聘沟通 → 简历投递 → 求职进度管理**
+
+## 功能地图
+
+| 模块 | 页面 | 说明 |
+|---|---|---|
+| 账号 | `/auth/login`、`/auth/sign-up` | 邮箱注册登录 |
+| 新用户引导 | `/onboarding` → `resume` → `review` → `preferences` → `complete` | 选择身份、上传简历、确认解析结果、职业偏好问卷、生成 Career Profile |
+| 首页 | `/dashboard` | 职业画像摘要、当前目标与下一步、推荐岗位、社区内容；新用户会看到"五步上手"引导卡（完成状态由数据推导，全部完成自动消失） |
+| 职业档案 | `/profile`、`/settings` | 完整 Career Profile 编辑；隐私与可见性 |
+| 职业规划 | `/careers`、`/careers/[id]`、`/skill-gap`、`/roadmap`、`/plan` | 职业推荐、隐藏职业潜力、职业详情、技能差距、分阶段路线图、Career Readiness、AI Career Plan |
+| 社区 | `/community`、`/community/c/[slug]`、`/community/post/[id]`、`/journey`、`/u/[id]` | 职业/公司/大学社区、帖子、Career Journey、公开主页（含徽章墙与活跃热力图）、关注 |
+| 成长激励 | `/practice`、`/progress` | 面试题库（8 个领域 112 道原创题，模拟答案为英文）、GitHub 风格活动热力图（投递 / 面试 / 刷题）、统计面板、26 枚成就徽章 |
+| 私信 | `/messages` | 用户私信与招聘者聊天（实时） |
+| 求职 | `/jobs`、`/jobs/[id]`、`/jobs/[id]/apply`、`/applications` | 个性化岗位推荐、匹配度、投递确认、申请追踪；列表分页加载，详情页附原始招聘广告链接 |
+| 招聘者 | `/employer`、`/employer/jobs/new`、`/employer/jobs/[id]/candidates`、`/employer/candidates/[id]`、`/employer/discover` | 发布岗位、候选人管理、技能证据、主动发现人才、邀请投递/面试 |
+| 其他 | `/notifications`、`/search` | 通知中心、全局搜索 |
+
+## AI 功能与 LLM 接入
+
+需要 LLM 的功能都通过 `lib/ai/llm.ts` 里的 `askLLM()` 调用大模型：OpenAI 兼容接口（`openai` SDK，默认阿里云百炼 + `GPT5.6`），流式返回，`json_schema` 严格模式输出并用 zod 校验；输出不合格式时会改用 `json_object` 模式（schema 写进提示词）让模型修正，绕开个别接口约束解码的毛病。计划里的分条每节最多 3 条，模型会用 `**……**` 标出少量重点，页面渲染成高亮。
+
+| 功能 | 调用位置 | 思考模式 | 时限 | 回退的规则算法 |
+|---|---|---|---|---|
+| 简历解析 | 上传简历后 | 关 | 100 秒 | `resume-parser.ts` |
+| 隐藏职业潜力的理由 | 职业发现、首页（按档案缓存一天） | 关 | 30 秒 | `matching.ts` |
+| Career Roadmap | 设定职业目标、重新生成路线图 | 关 | 75 秒 | `roadmap.ts` |
+| AI Career Plan（`/plan`） | 首次打开或点击 Regenerate | 关 | 240 秒 | `career-plan.ts` |
+
+实测（GPT5.6）：简历解析约 30 秒，路线图约 35 秒，生涯规划约 50 秒。开启思考模式会让时间翻倍，质量提升不明显，所以都关了；需要时在 `lib/ai/index.ts` 里把对应调用的 `effort` 改成 `"medium"` 或 `"high"`。
+
+**成长激励体系**：`/practice` 是面试题库（读题 → 自答 → 对照模拟答案 → 打勾），覆盖 AI Agent、机器学习、数据科学、系统设计、行为面试、产品设计、软件工程、金融 8 个领域；`/progress` 展示 LeetCode 风格统计（投递 / 面试 / 刷题 / 声望，均含"最近一周"）、GitHub 风格 12 个月活动热力图和 26 枚成就徽章（铜银金三档 + 积分）。所有数字都从现有数据推导（application_events、practice_progress、posts、点赞、私信、评论等），没有需要同步的计数器；徽章由 `refresh_achievements()` 在服务端按数据判定并发通知，前端无法伪造。题目全部原创（Agent 方向的主题参考了开源社区的面试整理，内容全部重写）。
+
+**AI Career Plan 页面与 PDF**：`/plan` 页面只显示计划摘要（现状、策略、阶段概览、本周行动）；完整版（每阶段行动清单、每周节奏、里程碑、匹配岗位、备选路径、风险）由 `/plan/pdf` 生成 PDF 下载（`pdfkit`，服务端生成）。下载是 **Career Lighthouse Pro** 功能（`profiles.is_pro`），测试期免费：非 Pro 用户点下载会弹出升级窗口，一键开通。生成计划时页面会显示分步进度动画。
+
+**配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
+
+## 技术栈
+
+| 部分 | 用的是 | 负责 |
+|---|---|---|
+| 前端 | Next.js 16（App Router）+ Tailwind + shadcn/ui | 页面与交互 |
+| 后端 | Supabase | Postgres 数据库（全部表启用 RLS）、登录、简历文件存储、实时消息 |
+| 托管 | Vercel | 推送到 `main` 后自动构建部署 |
+
+## 本地开发
+
+需要 Node.js 20 以上。
+
+```bash
+npm install
+cp .env.example .env   # 然后填入真实值，取值位置见文件内注释
+npm run dev            # 打开 http://localhost:3000
+```
+
+网站本身用到的环境变量：
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`（可选，配置后 AI 功能改由大模型生成，见上一节）
+
+`.env.example` 里其余的 `PG*` / `DATABASE_URL` 是给迁移工具等直连数据库用的，网站运行不需要，也不要配到 Vercel 上。
+
+## 数据库
+
+表结构、权限规则（RLS）、触发器和示例数据都在 `supabase/migrations/`，按文件名顺序执行：
+
+| 文件 | 内容 |
+|---|---|
+| `…120000_core_schema.sql` | 全部表、RLS、RPC 函数、自动生成通知的触发器、简历存储桶 |
+| `…120100_seed_reference_data.sql` | 技能库、职业库、虚构示例公司、社区、示例岗位 |
+| `…120200_function_grants.sql` | 函数执行权限收紧 |
+| `…120300_notifications_self_insert.sql` | 允许用户给自己创建通知 |
+| `…120400_jobs_read_policy.sql` | 岗位对发布者和投递过的人始终可见 |
+| `…120500_company_communities.sql` | 新公司自动创建公司社区；点赞评论不再改动帖子更新时间 |
+| `…120600_skills_created_by_index.sql` | 性能索引 |
+| `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
+| `20260919130000_pro_membership.sql` | Career Lighthouse Pro 会员标记（`profiles.is_pro`，PDF 下载权限） |
+| `20260920120000_real_jobs.sql` | 真实岗位数据第一批（21 家公司、20 个岗位，来自公开招聘广告，`is_sample = false`） |
+| `20260920130000_growth_system.sql` | 成长体系：练习题表、进度表、成就目录与发放函数 `refresh_achievements()`（security definer，按数据推导，用户无法自封徽章） |
+| `20260920140000_practice_questions.sql` | 面试题库种子数据第一批（60 题） |
+| `20260920150000_public_growth.sql` | 公开主页活跃数据 RPC `public_activity()`（只暴露每日总数，沿用档案可见性规则） |
+| `20260920160000_new_real_jobs.sql` | 真实岗位数据第二批（372 家公司、600 个岗位，含来源链接与"仅摘录"标记等新列） |
+| `20260920170000_more_achievements.sql` | 成就扩容至 26 枚，发放函数升级；题库分类扩展 |
+| `20260920180000_more_questions.sql` | 面试题库第二批（52 题：数据科学、系统设计、行为面试、产品设计） |
+
+示例公司和岗位（`is_sample = true`）都是虚构的。`real_jobs` 两批岗位来自公开招聘广告（广告未给出公司名的用虚构名代替），JD 仅为摘录的岗位会在详情页标注并附原帖链接。真实岗位没有入驻的招聘者，"Chat with Recruiter" 按钮会置灰并说明原因。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
+
+## 部署
+
+推送到 `main` 分支，Vercel 会自动重新部署到上面的线上地址。推送其他分支会生成一个独立的预览网址。
+
+Vercel 项目的环境变量：两个 `NEXT_PUBLIC_` 变量为必需；启用 LLM 需再加 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。
+
+## Supabase 登录配置
+
+Supabase 后台 → Authentication → URL Configuration：
+
+- **Site URL**：`https://jade-web-five.vercel.app`
+- **Redirect URLs**：
+  - `http://localhost:3000/**`（本地开发）
+  - `https://*-jade-e2a9.vercel.app/**`（Vercel 预览部署）
+
+目前**关闭了邮箱确认**（Authentication → Sign In / Providers → Confirm email），任何邮箱注册后直接登录。原因是 Supabase 自带的发信服务只会发给组织成员的邮箱，并且每小时条数有限。
+
+对外正式开放前：在 Authentication → Emails 里配置自定义 SMTP（例如 Resend，需要自己的域名），然后重新打开 Confirm email。注册页代码两种模式都支持，不用改。在那之前，"忘记密码"邮件也只能发给组织成员。
+
+## 目录
+
+```
+app/(app)/          登录后的页面（共享顶部导航）
+app/auth/           登录注册相关页面
+app/page.tsx        落地页
+components/app/     跨页面共享组件（导航、匹配度徽章、技能标签、就绪度圆环等）
+components/ui/      shadcn/ui 基础组件
+lib/ai/             AI 功能（LLM 入口 + 规则算法）
+lib/data/           数据读取（职业库、个人档案、岗位、成长数据）
+lib/actions/        服务端操作（Server Actions）
+lib/auth.ts         登录状态与角色检查
+supabase/migrations 数据库迁移
+evals/              AI 输出评测（CI 质量门禁 eval-gate 使用）
+proxy.ts            每次请求刷新登录状态，未登录访问受保护页面时跳转到登录页
+```
+
+数据库连接方式与踩过的坑见 [CONNECTION.md](CONNECTION.md)。

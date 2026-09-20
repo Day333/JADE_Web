@@ -1,126 +1,133 @@
 # Career Lighthouse
 
-线上地址：**https://jade-web-five.vercel.app**（代码仓库沿用原名 `JADE_Web`）
+English | [中文](README-zh.md)
 
-Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职业成长、职业社区与招聘平台（网站界面为英文）。围绕用户的 Career Profile，覆盖完整流程：
+Live site: **https://jade-web-five.vercel.app** (the repository keeps its original name, `JADE_Web`) · See the [tech report](TECH_REPORT.md) for architecture details (Chinese)
 
-**职业认知 → 职业发现 → 职业规划 → 能力提升 → 社区交流 → 岗位发现 → 招聘沟通 → 简历投递 → 求职进度管理**
+Career Lighthouse is an AI career-growth, community and recruiting platform for university students, graduates and early-career users. Built around each user's Career Profile, it covers the full journey:
 
-## 功能地图
+**Self-discovery → Career discovery → Planning → Skill building → Community → Job discovery → Recruiter chat → Applications → Progress tracking**
 
-| 模块 | 页面 | 说明 |
+## Feature map
+
+| Module | Pages | Notes |
 |---|---|---|
-| 账号 | `/auth/login`、`/auth/sign-up` | 邮箱注册登录 |
-| 新用户引导 | `/onboarding` → `resume` → `review` → `preferences` → `complete` | 选择身份、上传简历、确认解析结果、职业偏好问卷、生成 Career Profile |
-| 首页 | `/dashboard` | 职业画像摘要、当前目标与下一步、推荐岗位、社区内容 |
-| 职业档案 | `/profile`、`/settings` | 完整 Career Profile 编辑；隐私与可见性 |
-| 职业规划 | `/careers`、`/careers/[id]`、`/skill-gap`、`/roadmap`、`/plan` | 职业推荐、隐藏职业潜力、职业详情、技能差距、分阶段路线图、Career Readiness、AI Career Plan |
-| 社区 | `/community`、`/community/c/[slug]`、`/community/post/[id]`、`/journey`、`/u/[id]` | 职业/公司/大学社区、帖子、Career Journey、公开主页、关注 |
-| 成长激励 | `/practice`、`/progress` | 面试题库（AI Agents / 机器学习 / 软件 / 金融，60 题原创中英模拟答案为英文）、GitHub 风格活动热力图（投递 / 面试 / 刷题）、统计面板、成就徽章体系 |
-| 私信 | `/messages` | 用户私信与招聘者聊天（实时） |
-| 求职 | `/jobs`、`/jobs/[id]`、`/jobs/[id]/apply`、`/applications` | 个性化岗位推荐、匹配度、投递确认、申请追踪 |
-| 招聘者 | `/employer`、`/employer/jobs/new`、`/employer/jobs/[id]/candidates`、`/employer/candidates/[id]`、`/employer/discover` | 发布岗位、候选人管理、技能证据、主动发现人才、邀请投递/面试 |
-| 其他 | `/notifications`、`/search` | 通知中心、全局搜索 |
+| Accounts | `/auth/login`, `/auth/sign-up` | Email sign-up and login |
+| Onboarding | `/onboarding` → `resume` → `review` → `preferences` → `complete` | Pick a role, upload a resume, review the AI-extracted profile, preference questionnaire, build the Career Profile |
+| Home | `/dashboard` | Profile summary, current goal and next steps, recommended jobs, community feed; new users see a five-step getting-started card (done states derive from data; it disappears once complete) |
+| Career Profile | `/profile`, `/settings` | Full profile editing; privacy and visibility |
+| Career planning | `/careers`, `/careers/[id]`, `/skill-gap`, `/roadmap`, `/plan` | Career recommendations, hidden potential, career details, skill gap, staged roadmap, Career Readiness, AI Career Plan |
+| Community | `/community`, `/community/c/[slug]`, `/community/post/[id]`, `/journey`, `/u/[id]` | Career/company/university communities, posts, Career Journey, public profiles (with badge wall and activity heatmap), follows |
+| Growth | `/practice`, `/progress` | Interview question bank (112 original questions across 8 fields), GitHub-style activity heatmap (applications / interviews / practice), stats panel, 26 achievement badges |
+| Messages | `/messages` | Direct messages and recruiter chat (realtime) |
+| Jobs | `/jobs`, `/jobs/[id]`, `/jobs/[id]/apply`, `/applications` | Personalised recommendations, match scores, guided applications, application tracker; paginated listings with links to original job ads |
+| Employers | `/employer`, `/employer/jobs/new`, `/employer/jobs/[id]/candidates`, `/employer/candidates/[id]`, `/employer/discover` | Post jobs, manage candidates, skills evidence, discover talent, invite to apply/interview |
+| Other | `/notifications`, `/search` | Notification centre, global search |
 
-## AI 功能与 LLM 接入
+## AI features and LLM integration
 
-需要 LLM 的功能都通过 `lib/ai/llm.ts` 里的 `askLLM()` 调用大模型：OpenAI 兼容接口（`openai` SDK，默认阿里云百炼 + `kimi-k3`），流式返回，`json_schema` 严格模式输出并用 zod 校验；输出不合格式时会改用 `json_object` 模式（schema 写进提示词）让模型修正，绕开个别接口约束解码的毛病。计划里的分条每节最多 3 条，模型会用 `**……**` 标出少量重点，页面渲染成高亮。
+Every LLM-backed feature goes through `askLLM()` in `lib/ai/llm.ts`: an OpenAI-compatible endpoint (`openai` SDK, defaulting to Alibaba Cloud DashScope + `GPT5.6`), streamed responses, strict `json_schema` output validated with zod. When the endpoint's constrained decoding garbles the output, the call retries in `json_object` mode with the schema embedded in the prompt. Plan sub-sections are capped at 3 bullets, and the model marks a handful of key points with `**…**`, rendered as highlights.
 
-| 功能 | 调用位置 | 思考模式 | 时限 | 回退的规则算法 |
+| Feature | Trigger | Thinking | Timeout | Rule-based fallback |
 |---|---|---|---|---|
-| 简历解析 | 上传简历后 | 关 | 100 秒 | `resume-parser.ts` |
-| 隐藏职业潜力的理由 | 职业发现、首页（按档案缓存一天） | 关 | 30 秒 | `matching.ts` |
-| Career Roadmap | 设定职业目标、重新生成路线图 | 关 | 75 秒 | `roadmap.ts` |
-| AI Career Plan（`/plan`） | 首次打开或点击 Regenerate | 关 | 240 秒 | `career-plan.ts` |
+| Resume parsing | After a resume upload | off | 100 s | `resume-parser.ts` |
+| Hidden-potential reasons | Career discovery, dashboard (cached per profile for a day) | off | 30 s | `matching.ts` |
+| Career Roadmap | Setting a goal, regenerating | off | 75 s | `roadmap.ts` |
+| AI Career Plan (`/plan`) | First visit or Regenerate | off | 240 s | `career-plan.ts` |
 
-实测（kimi-k3）：简历解析约 30 秒，路线图约 35 秒，生涯规划约 50 秒。开启思考模式会让时间翻倍，质量提升不明显，所以都关了；需要时在 `lib/ai/index.ts` 里把对应调用的 `effort` 改成 `"medium"` 或 `"high"`。
+Measured with GPT5.6: resume parsing ~30 s, roadmap ~35 s, career plan ~50 s. Thinking mode doubles the latency with little quality gain, so it is off; set `effort` to `"medium"` or `"high"` per call in `lib/ai/index.ts` if needed.
 
-**成长激励体系**：`/practice` 是面试题库（读题 → 自答 → 对照模拟答案 → 打勾），`/progress` 展示 LeetCode 风格统计（投递 / 面试 / 刷题 / 声望，均含"最近一周"）、GitHub 风格 12 个月活动热力图和 14 枚成就徽章（铜银金三档 + 积分）。所有数字都从现有数据推导（application_events、practice_progress、posts、点赞），没有需要同步的计数器；徽章由 `refresh_achievements()` 在服务端按数据判定并发通知，前端无法伪造。题目原创（Agent 方向的主题参考了开源社区的面试整理，内容全部重写）。
+**Growth system**: `/practice` is the question bank (read → answer out loud → compare with the model answer → tick), covering AI agents, machine learning, data science, system design, behavioural interviews, product & design, software engineering and finance. `/progress` shows LeetCode-style stats (applications / interviews / questions / reputation, each with a last-week delta), a GitHub-style 12-month activity heatmap, and 26 badges (bronze/silver/gold with points). Every number is derived from existing rows (application_events, practice_progress, posts, likes, conversations, comments) — no counters to keep in sync. Badges are awarded server-side by `refresh_achievements()` from real data, so they cannot be faked from the client. All questions are original (agent topics take their taxonomy from open-source interview collections; the content is fully rewritten).
 
-**AI Career Plan 页面与 PDF**：`/plan` 页面只显示计划摘要（现状、策略、阶段概览、本周行动）；完整版（每阶段行动清单、每周节奏、里程碑、匹配岗位、备选路径、风险）由 `/plan/pdf` 生成 PDF 下载（`pdfkit`，服务端生成）。下载是 **Career Lighthouse Pro** 功能（`profiles.is_pro`），测试期免费：非 Pro 用户点下载会弹出升级窗口，一键开通。生成计划时页面会显示分步进度动画。
+**AI Career Plan page and PDF**: `/plan` shows a summary only (where you are, strategy, phases at a glance, this week). The full version (per-phase action lists, weekly rhythm, milestones, matched jobs, alternative paths, risks) is generated as a PDF by `/plan/pdf` (`pdfkit`, server-side). Downloading is a **Career Lighthouse Pro** feature (`profiles.is_pro`), free during the beta: non-Pro users get an upgrade dialog with one-click activation. Plan generation shows a step-by-step progress animation.
 
-**配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
+**Configuration**: set `DASHSCOPE_API_KEY`, `LLM_BASE_URL` and optionally `LLM_MODEL` in `.env` and on Vercel; switching to any other OpenAI-compatible service only requires changing these three. If they are missing, or a call fails, times out or returns malformed output, `askLLM()` returns `null` and the feature falls back to its rule-based algorithm — pages never break. `/plan` states which model generated the plan.
 
-## 技术栈
+## Stack
 
-| 部分 | 用的是 | 负责 |
+| Part | Technology | Responsibility |
 |---|---|---|
-| 前端 | Next.js 16（App Router）+ Tailwind + shadcn/ui | 页面与交互 |
-| 后端 | Supabase | Postgres 数据库（全部表启用 RLS）、登录、简历文件存储、实时消息 |
-| 托管 | Vercel | 推送到 `main` 后自动构建部署 |
+| Frontend | Next.js 16 (App Router) + Tailwind + shadcn/ui | Pages and interaction |
+| Backend | Supabase | Postgres (RLS on every table), auth, resume storage, realtime messaging |
+| Hosting | Vercel | Auto build & deploy on push to `main` |
 
-## 本地开发
+## Local development
 
-需要 Node.js 20 以上。
+Requires Node.js 20+.
 
 ```bash
 npm install
-cp .env.example .env   # 然后填入真实值，取值位置见文件内注释
-npm run dev            # 打开 http://localhost:3000
+cp .env.example .env   # then fill in real values; sources are noted in the file
+npm run dev            # open http://localhost:3000
 ```
 
-网站本身用到的环境变量：
+Environment variables the site itself uses:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`（可选，配置后 AI 功能改由大模型生成，见上一节）
+- `DASHSCOPE_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` (optional; enables LLM-generated AI features, see above)
 
-`.env.example` 里其余的 `PG*` / `DATABASE_URL` 是给迁移工具等直连数据库用的，网站运行不需要，也不要配到 Vercel 上。
+The remaining `PG*` / `DATABASE_URL` entries in `.env.example` are for tools that connect to the database directly (migrations etc.); the site does not need them and they should not be set on Vercel.
 
-## 数据库
+## Database
 
-表结构、权限规则（RLS）、触发器和示例数据都在 `supabase/migrations/`，按文件名顺序执行：
+Schema, RLS policies, triggers and seed data live in `supabase/migrations/`, applied in filename order:
 
-| 文件 | 内容 |
+| File | Contents |
 |---|---|
-| `…120000_core_schema.sql` | 全部表、RLS、RPC 函数、自动生成通知的触发器、简历存储桶 |
-| `…120100_seed_reference_data.sql` | 技能库、职业库、虚构示例公司、社区、示例岗位 |
-| `…120200_function_grants.sql` | 函数执行权限收紧 |
-| `…120300_notifications_self_insert.sql` | 允许用户给自己创建通知 |
-| `…120400_jobs_read_policy.sql` | 岗位对发布者和投递过的人始终可见 |
-| `…120500_company_communities.sql` | 新公司自动创建公司社区；点赞评论不再改动帖子更新时间 |
-| `…120600_skills_created_by_index.sql` | 性能索引 |
-| `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
-| `20260919130000_pro_membership.sql` | Career Lighthouse Pro 会员标记（`profiles.is_pro`，PDF 下载权限） |
-| `20260920120000_real_jobs.sql` | 真实岗位数据（21 家公司、20 个岗位，来自公开招聘广告，`is_sample = false`） |
-| `20260920130000_growth_system.sql` | 成长体系：练习题表、进度表、成就目录与发放函数 `refresh_achievements()`（security definer，按数据推导，用户无法自封徽章） |
-| `20260920140000_practice_questions.sql` | 面试题库种子数据（60 题原创英文题目与模拟答案） |
+| `…120000_core_schema.sql` | All tables, RLS, RPC functions, notification triggers, resume storage bucket |
+| `…120100_seed_reference_data.sql` | Skill catalogue, careers, fictional sample companies, communities, sample jobs |
+| `…120200_function_grants.sql` | Tightened function execution grants |
+| `…120300_notifications_self_insert.sql` | Users may create their own notifications |
+| `…120400_jobs_read_policy.sql` | Jobs stay visible to their poster and to applicants |
+| `…120500_company_communities.sql` | New companies get a community automatically; likes/comments no longer bump post timestamps |
+| `…120600_skills_created_by_index.sql` | Performance index |
+| `20260919120000_career_plans.sql` | AI Career Plan storage |
+| `20260919130000_pro_membership.sql` | Career Lighthouse Pro flag (`profiles.is_pro`, gates the PDF download) |
+| `20260920120000_real_jobs.sql` | Real job batch 1 (21 companies, 20 jobs from public ads, `is_sample = false`) |
+| `20260920130000_growth_system.sql` | Growth system: question/progress tables, achievement catalogue, `refresh_achievements()` (security definer; derived from data, badges cannot be self-awarded) |
+| `20260920140000_practice_questions.sql` | Question bank batch 1 (60 questions) |
+| `20260920150000_public_growth.sql` | Public-profile activity RPC `public_activity()` (day totals only; follows profile visibility rules) |
+| `20260920160000_new_real_jobs.sql` | Real job batch 2 (372 companies, 600 jobs, with source links and excerpt flags) |
+| `20260920170000_more_achievements.sql` | Achievements expanded to 26; upgraded award pass; new question categories |
+| `20260920180000_more_questions.sql` | Question bank batch 2 (52 questions: data science, system design, behavioural, product & design) |
 
-示例公司和岗位（`is_sample = true`）都是虚构的。`real_jobs` 里的岗位来自公开招聘广告（广告未给出公司名的用虚构名代替）。两类岗位都没有入驻的招聘者，"Chat with Recruiter" 按钮会置灰并说明原因。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
+Sample companies and jobs (`is_sample = true`) are fictional. Both real-job batches come from public job ads (fictional names substitute for ads that omit the company); excerpt-only descriptions are flagged on the detail page with a link to the original posting. Real jobs have no recruiter on the platform, so "Chat with Recruiter" is disabled with an explanation. After schema changes, regenerate types with the Supabase MCP `generate_typescript_types` into `lib/database.types.ts`.
 
-## 部署
+## Deployment
 
-推送到 `main` 分支，Vercel 会自动重新部署到上面的线上地址。推送其他分支会生成一个独立的预览网址。
+Push to `main` and Vercel redeploys the live site automatically; other branches get their own preview URLs.
 
-Vercel 项目的环境变量目前只配了两个 `NEXT_PUBLIC_` 变量；要启用 LLM 需再加 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。
+Vercel environment variables: the two `NEXT_PUBLIC_` values are required; add `DASHSCOPE_API_KEY`, `LLM_BASE_URL` and `LLM_MODEL` to enable the LLM.
 
-## Supabase 登录配置
+## Supabase auth configuration
 
-Supabase 后台 → Authentication → URL Configuration：
+Supabase dashboard → Authentication → URL Configuration:
 
-- **Site URL**：`https://jade-web-five.vercel.app`
-- **Redirect URLs**：
-  - `http://localhost:3000/**`（本地开发）
-  - `https://*-jade-e2a9.vercel.app/**`（Vercel 预览部署）
+- **Site URL**: `https://jade-web-five.vercel.app`
+- **Redirect URLs**:
+  - `http://localhost:3000/**` (local development)
+  - `https://*-jade-e2a9.vercel.app/**` (Vercel preview deployments)
 
-目前**关闭了邮箱确认**（Authentication → Sign In / Providers → Confirm email），任何邮箱注册后直接登录。原因是 Supabase 自带的发信服务只会发给组织成员的邮箱，并且每小时条数有限。
+**Email confirmation is currently off** (Authentication → Sign In / Providers → Confirm email); any email can sign up and log in straight away. Supabase's built-in mailer only delivers to organisation members and is rate-limited per hour.
 
-对外正式开放前：在 Authentication → Emails 里配置自定义 SMTP（例如 Resend，需要自己的域名），然后重新打开 Confirm email。注册页代码两种模式都支持，不用改。在那之前，"忘记密码"邮件也只能发给组织成员。
+Before a public launch: configure custom SMTP under Authentication → Emails (e.g. Resend, requires your own domain), then re-enable Confirm email. The sign-up page supports both modes without code changes. Until then, "forgot password" emails also only reach organisation members.
 
-## 目录
+## Layout
 
 ```
-app/(app)/          登录后的页面（共享顶部导航）
-app/auth/           登录注册相关页面
-app/page.tsx        落地页
-components/app/     跨页面共享组件（导航、匹配度徽章、技能标签、就绪度圆环等）
-components/ui/      shadcn/ui 基础组件
-lib/ai/             AI 功能（LLM 入口 + 规则算法）
-lib/data/           数据读取（职业库、个人档案、岗位）
-lib/actions/        服务端操作（Server Actions）
-lib/auth.ts         登录状态与角色检查
-supabase/migrations 数据库迁移
-proxy.ts            每次请求刷新登录状态，未登录访问受保护页面时跳转到登录页
+app/(app)/          Signed-in pages (shared top navigation)
+app/auth/           Login and registration pages
+app/page.tsx        Landing page
+components/app/     Shared components (nav, match badges, skill chips, readiness ring, …)
+components/ui/      shadcn/ui primitives
+lib/ai/             AI features (LLM entry point + rule-based algorithms)
+lib/data/           Data loaders (careers, profiles, jobs, growth)
+lib/actions/        Server Actions
+lib/auth.ts         Session and role checks
+supabase/migrations Database migrations
+evals/              AI output evals (used by the eval-gate CI check)
+proxy.ts            Refreshes the session per request; redirects signed-out visits to login
 ```
 
-数据库连接方式与踩过的坑见 [CONNECTION.md](CONNECTION.md)。
+Database connection notes and gotchas: [CONNECTION.md](CONNECTION.md).
