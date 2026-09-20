@@ -1,14 +1,49 @@
-# Career Lighthouse
+<div align="center">
 
-[English](README.md) | 中文
+# 🗼 Career Lighthouse
 
-线上地址：**https://jade-web-five.vercel.app**（代码仓库沿用原名 `JADE_Web`）· 技术选型详见[技术报告](TECH_REPORT.md)
+### *Your light. Your path. Your future.*
 
-Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职业成长、职业社区与招聘平台（网站界面为英文）。围绕用户的 Career Profile，覆盖完整流程：
+面向大学生、毕业生和职业早期用户的 AI 职业成长、社区与招聘平台<br/>（网站界面为英文）
+
+[**🌐 在线体验**](https://jade-web-five.vercel.app) · [📖 English](README.md) · [📋 技术报告](TECH_REPORT.md)
+
+![Next.js 16](https://img.shields.io/badge/Next.js_16-000000?logo=nextdotjs&logoColor=white)
+![React 19](https://img.shields.io/badge/React_19-087EA4?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
+
+🏆 **本项目为 [Futura Remix Hackathon 2026](https://futuraremix.mentor-me.com.au/offline-hackathon)（线下赛道）参赛作品**
+
+<img src="docs/screenshot-landing.png" alt="Career Lighthouse 着陆页" width="92%" />
+
+</div>
+
+> 代码仓库沿用原名 `JADE_Web`，产品名为 **Career Lighthouse**。
+
+围绕用户的 Career Profile，覆盖完整流程：
 
 **职业认知 → 职业发现 → 职业规划 → 能力提升 → 社区交流 → 岗位发现 → 招聘沟通 → 简历投递 → 求职进度管理**
 
-## 功能地图
+## ✨ 亮点
+
+- 📄 **一份简历生成完整职业档案**——AI 自动提取教育、经历、项目、技能，入库前由用户确认
+- 🎯 **可解释的职业/岗位匹配**——就绪度评分与技能差距来自透明的规则算法，"隐藏职业潜力"由 AI 撰写理由
+- 🗺️ **技能差距 → 月度路线图 → AI 职业规划**——完整版导出精排 PDF（Pro 功能，测试期免费）
+- 💼 **620+ 条真实岗位**，带匹配分析、原帖链接和完整投递追踪
+- 🧠 **112 道原创面试题**，覆盖 AI Agent 到行为面试等 8 个领域
+- 🏅 **26 枚由数据推导的成就徽章**、连续打卡和 GitHub 风格活跃热力图——刷不了假，赢了才亮
+- 💬 **社区、职业成长时间线与招聘者实时私信**
+- 🧭 **新用户五步上手引导**，做完一步自动打勾，全部完成自动消失
+
+<div align="center">
+<img src="docs/screenshot-profile.png" alt="公开主页：徽章墙、活跃热力图与职业时间线" width="92%" />
+<br/><sub>用户公开主页：徽章、活跃度和职业成长轨迹，一条链接展示自己。</sub>
+</div>
+
+## 🧭 功能地图
 
 | 模块 | 页面 | 说明 |
 |---|---|---|
@@ -24,7 +59,7 @@ Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职�
 | 招聘者 | `/employer`、`/employer/jobs/new`、`/employer/jobs/[id]/candidates`、`/employer/candidates/[id]`、`/employer/discover` | 发布岗位、候选人管理、技能证据、主动发现人才、邀请投递/面试 |
 | 其他 | `/notifications`、`/search` | 通知中心、全局搜索 |
 
-## AI 功能与 LLM 接入
+## 🤖 AI 功能与 LLM 接入
 
 需要 LLM 的功能都通过 `lib/ai/llm.ts` 里的 `askLLM()` 调用大模型：OpenAI 兼容接口（`openai` SDK，默认阿里云百炼 + `GPT5.6`），流式返回，`json_schema` 严格模式输出并用 zod 校验；输出不合格式时会改用 `json_object` 模式（schema 写进提示词）让模型修正，绕开个别接口约束解码的毛病。计划里的分条每节最多 3 条，模型会用 `**……**` 标出少量重点，页面渲染成高亮。
 
@@ -43,7 +78,7 @@ Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职�
 
 **配置**：`.env` 和 Vercel 环境变量里设 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`，可选 `LLM_MODEL`；换别的 OpenAI 兼容服务只需改这三项。没配置、请求失败、超时或输出不合格式时，`askLLM()` 返回 `null`，自动回退到规则算法，页面不会出错。`/plan` 页面会标明计划由哪个模型生成。
 
-## 技术栈
+## 🧱 技术栈
 
 | 部分 | 用的是 | 负责 |
 |---|---|---|
@@ -51,7 +86,7 @@ Career Lighthouse 是面向大学生、毕业生和职业早期用户的 AI 职�
 | 后端 | Supabase | Postgres 数据库（全部表启用 RLS）、登录、简历文件存储、实时消息 |
 | 托管 | Vercel | 推送到 `main` 后自动构建部署 |
 
-## 本地开发
+## 🛠️ 本地开发
 
 需要 Node.js 20 以上。
 
@@ -69,7 +104,7 @@ npm run dev            # 打开 http://localhost:3000
 
 `.env.example` 里其余的 `PG*` / `DATABASE_URL` 是给迁移工具等直连数据库用的，网站运行不需要，也不要配到 Vercel 上。
 
-## 数据库
+## 🗄️ 数据库
 
 表结构、权限规则（RLS）、触发器和示例数据都在 `supabase/migrations/`，按文件名顺序执行：
 
@@ -94,13 +129,13 @@ npm run dev            # 打开 http://localhost:3000
 
 示例公司和岗位（`is_sample = true`）都是虚构的。`real_jobs` 两批岗位来自公开招聘广告（广告未给出公司名的用虚构名代替），JD 仅为摘录的岗位会在详情页标注并附原帖链接。真实岗位没有入驻的招聘者，"Chat with Recruiter" 按钮会置灰并说明原因。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
 
-## 部署
+## 🚢 部署
 
 推送到 `main` 分支，Vercel 会自动重新部署到上面的线上地址。推送其他分支会生成一个独立的预览网址。
 
 Vercel 项目的环境变量：两个 `NEXT_PUBLIC_` 变量为必需；启用 LLM 需再加 `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。
 
-## Supabase 登录配置
+## 🔐 Supabase 登录配置
 
 Supabase 后台 → Authentication → URL Configuration：
 
@@ -113,7 +148,7 @@ Supabase 后台 → Authentication → URL Configuration：
 
 对外正式开放前：在 Authentication → Emails 里配置自定义 SMTP（例如 Resend，需要自己的域名），然后重新打开 Confirm email。注册页代码两种模式都支持，不用改。在那之前，"忘记密码"邮件也只能发给组织成员。
 
-## 目录
+## 📁 目录
 
 ```
 app/(app)/          登录后的页面（共享顶部导航）
