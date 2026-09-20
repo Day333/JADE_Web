@@ -17,6 +17,9 @@
 
 🏆 **本项目为 [Futura Remix Hackathon 2026](https://futuraremix.mentor-me.com.au/offline-hackathon)（线下赛道）参赛作品**
 
+🎬 **[观看演示视频](video.mp4)** · 🔑 **演示账号** — 邮箱 `xinyu.chen.demo@example.com` · 密码 `123456`<br/>
+<sub>一个有三个月使用记录的求职者档案：26 份投递、3 场面试、69 道刷题、22 枚徽章。</sub>
+
 <img src="docs/screenshot-landing.png" alt="Career Lighthouse 着陆页" width="92%" />
 
 </div>
@@ -103,31 +106,6 @@ npm run dev            # 打开 http://localhost:3000
 - `DASHSCOPE_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`（可选，配置后 AI 功能改由大模型生成，见上一节）
 
 `.env.example` 里其余的 `PG*` / `DATABASE_URL` 是给迁移工具等直连数据库用的，网站运行不需要，也不要配到 Vercel 上。
-
-## 🗄️ 数据库
-
-表结构、权限规则（RLS）、触发器和示例数据都在 `supabase/migrations/`，按文件名顺序执行：
-
-| 文件 | 内容 |
-|---|---|
-| `…120000_core_schema.sql` | 全部表、RLS、RPC 函数、自动生成通知的触发器、简历存储桶 |
-| `…120100_seed_reference_data.sql` | 技能库、职业库、虚构示例公司、社区、示例岗位 |
-| `…120200_function_grants.sql` | 函数执行权限收紧 |
-| `…120300_notifications_self_insert.sql` | 允许用户给自己创建通知 |
-| `…120400_jobs_read_policy.sql` | 岗位对发布者和投递过的人始终可见 |
-| `…120500_company_communities.sql` | 新公司自动创建公司社区；点赞评论不再改动帖子更新时间 |
-| `…120600_skills_created_by_index.sql` | 性能索引 |
-| `20260919120000_career_plans.sql` | AI Career Plan 存储表 |
-| `20260919130000_pro_membership.sql` | Career Lighthouse Pro 会员标记（`profiles.is_pro`，PDF 下载权限） |
-| `20260920120000_real_jobs.sql` | 真实岗位数据第一批（21 家公司、20 个岗位，来自公开招聘广告，`is_sample = false`） |
-| `20260920130000_growth_system.sql` | 成长体系：练习题表、进度表、成就目录与发放函数 `refresh_achievements()`（security definer，按数据推导，用户无法自封徽章） |
-| `20260920140000_practice_questions.sql` | 面试题库种子数据第一批（60 题） |
-| `20260920150000_public_growth.sql` | 公开主页活跃数据 RPC `public_activity()`（只暴露每日总数，沿用档案可见性规则） |
-| `20260920160000_new_real_jobs.sql` | 真实岗位数据第二批（372 家公司、600 个岗位，含来源链接与"仅摘录"标记等新列） |
-| `20260920170000_more_achievements.sql` | 成就扩容至 26 枚，发放函数升级；题库分类扩展 |
-| `20260920180000_more_questions.sql` | 面试题库第二批（52 题：数据科学、系统设计、行为面试、产品设计） |
-
-示例公司和岗位（`is_sample = true`）都是虚构的。`real_jobs` 两批岗位来自公开招聘广告（广告未给出公司名的用虚构名代替），JD 仅为摘录的岗位会在详情页标注并附原帖链接。真实岗位没有入驻的招聘者，"Chat with Recruiter" 按钮会置灰并说明原因。改了表结构后重新生成类型：用 Supabase MCP 的 `generate_typescript_types`，结果保存到 `lib/database.types.ts`。
 
 ## 🚢 部署
 

@@ -17,6 +17,9 @@ An AI career-growth, community and recruiting platform<br/>for university studen
 
 🏆 **Built for the [Futura Remix Hackathon 2026](https://futuraremix.mentor-me.com.au/offline-hackathon) (offline track)**
 
+🎬 **[Watch the demo video](video.mp4)** · 🔑 **Demo account** — email `xinyu.chen.demo@example.com` · password `123456`<br/>
+<sub>A seeker profile with three months of activity: 26 applications, 3 interviews, 69 practised questions, 22 badges.</sub>
+
 <img src="docs/screenshot-landing.png" alt="Career Lighthouse landing page" width="92%" />
 
 </div>
@@ -103,31 +106,6 @@ Environment variables the site itself uses:
 - `DASHSCOPE_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` (optional; enables LLM-generated AI features, see above)
 
 The remaining `PG*` / `DATABASE_URL` entries in `.env.example` are for tools that connect to the database directly (migrations etc.); the site does not need them and they should not be set on Vercel.
-
-## 🗄️ Database
-
-Schema, RLS policies, triggers and seed data live in `supabase/migrations/`, applied in filename order:
-
-| File | Contents |
-|---|---|
-| `…120000_core_schema.sql` | All tables, RLS, RPC functions, notification triggers, resume storage bucket |
-| `…120100_seed_reference_data.sql` | Skill catalogue, careers, fictional sample companies, communities, sample jobs |
-| `…120200_function_grants.sql` | Tightened function execution grants |
-| `…120300_notifications_self_insert.sql` | Users may create their own notifications |
-| `…120400_jobs_read_policy.sql` | Jobs stay visible to their poster and to applicants |
-| `…120500_company_communities.sql` | New companies get a community automatically; likes/comments no longer bump post timestamps |
-| `…120600_skills_created_by_index.sql` | Performance index |
-| `20260919120000_career_plans.sql` | AI Career Plan storage |
-| `20260919130000_pro_membership.sql` | Career Lighthouse Pro flag (`profiles.is_pro`, gates the PDF download) |
-| `20260920120000_real_jobs.sql` | Real job batch 1 (21 companies, 20 jobs from public ads, `is_sample = false`) |
-| `20260920130000_growth_system.sql` | Growth system: question/progress tables, achievement catalogue, `refresh_achievements()` (security definer; derived from data, badges cannot be self-awarded) |
-| `20260920140000_practice_questions.sql` | Question bank batch 1 (60 questions) |
-| `20260920150000_public_growth.sql` | Public-profile activity RPC `public_activity()` (day totals only; follows profile visibility rules) |
-| `20260920160000_new_real_jobs.sql` | Real job batch 2 (372 companies, 600 jobs, with source links and excerpt flags) |
-| `20260920170000_more_achievements.sql` | Achievements expanded to 26; upgraded award pass; new question categories |
-| `20260920180000_more_questions.sql` | Question bank batch 2 (52 questions: data science, system design, behavioural, product & design) |
-
-Sample companies and jobs (`is_sample = true`) are fictional. Both real-job batches come from public job ads (fictional names substitute for ads that omit the company); excerpt-only descriptions are flagged on the detail page with a link to the original posting. Real jobs have no recruiter on the platform, so "Chat with Recruiter" is disabled with an explanation. After schema changes, regenerate types with the Supabase MCP `generate_typescript_types` into `lib/database.types.ts`.
 
 ## 🚢 Deployment
 
