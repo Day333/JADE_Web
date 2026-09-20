@@ -20,7 +20,7 @@ An AI career-growth, community and recruiting platform<br/>for university studen
 🎬 **[Watch the demo video](video.mp4)** · 🔑 **Demo account** — email `xinyu.chen.demo@example.com` · password `123456`<br/>
 <sub>A seeker profile with three months of activity: 26 applications, 3 interviews, 69 practised questions, 22 badges.</sub>
 
-<img src="docs/screenshot-landing.png" alt="Career Lighthouse landing page" width="92%" />
+<img src="docs/screenshot-hero.png" alt="Career Lighthouse landing page" width="92%" />
 
 </div>
 

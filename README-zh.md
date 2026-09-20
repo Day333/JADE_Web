@@ -20,7 +20,7 @@
 🎬 **[观看演示视频](video.mp4)** · 🔑 **演示账号** — 邮箱 `xinyu.chen.demo@example.com` · 密码 `123456`<br/>
 <sub>一个有三个月使用记录的求职者档案：26 份投递、3 场面试、69 道刷题、22 枚徽章。</sub>
 
-<img src="docs/screenshot-landing.png" alt="Career Lighthouse 着陆页" width="92%" />
+<img src="docs/screenshot-hero.png" alt="Career Lighthouse 着陆页" width="92%" />
 
 </div>
 
